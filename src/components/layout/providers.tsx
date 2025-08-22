@@ -5,6 +5,8 @@ import { useTheme } from 'next-themes';
 import React from 'react';
 import { SessionProvider } from 'next-auth/react';
 import { ActiveThemeProvider } from '../active-theme';
+import { store } from '@/store/Store';
+import { Provider } from 'react-redux';
 
 export default function Providers({
   activeThemeValue,
@@ -20,8 +22,7 @@ export default function Providers({
     <>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
         <SessionProvider>
-
-            {children}
+          <Provider store={store}>{children}</Provider>
         </SessionProvider>
       </ActiveThemeProvider>
     </>

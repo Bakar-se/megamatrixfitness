@@ -156,3 +156,61 @@
   /* Apply the reveal animation */
   animation: reveal 0.4s ease-in-out forwards;
 }
+
+.react-tel-input .form-control,
+.react-tel-input .flag-dropdown {
+  border-width: 2px !important;
+  border-radius: var(--radius) !important;
+  border-color: var(--input) !important;
+  background-color: transparent !important;
+  color: var(--foreground) !important;
+  transition:
+    color 0.2s,
+    box-shadow 0.2s !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+.react-tel-input .form-control:focus,
+.react-tel-input .form-control:focus-visible {
+  border-color: var(--ring) !important;
+  box-shadow: 0 0 0 2px var(--ring) !important;
+}
+.react-tel-input .flag-dropdown {
+  border-radius: var(--radius) 0 0 var(--radius) !important;
+  background-color: transparent !important;
+}
+.react-tel-input .selected-flag {
+  background-color: transparent !important;
+  border-radius: var(--radius) 0 0 var(--radius) !important;
+}
+.react-tel-input .selected-flag:hover,
+.react-tel-input .selected-flag:focus {
+  background-color: var(--accent) !important;
+}
+.react-tel-input .country-list {
+  background-color: var(--background) !important;
+  color: var(--foreground) !important;
+  border-color: var(--input) !important;
+  border-width: 2px !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+.react-tel-input .country-list .country:hover {
+  background-color: var(--accent) !important;
+}
+.react-tel-input .country-list .country.highlight {
+  background-color: var(--accent) !important;
+}
+.react-tel-input .special-label {
+  color: var(--foreground) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+}
+.react-tel-input .form-control::placeholder {
+  color: var(--muted-foreground) !important;
+}
+.react-tel-input .form-control:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}

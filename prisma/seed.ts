@@ -2,29 +2,31 @@ import { hashPassword } from '@/lib/authHelper';
 import prisma from '@/lib/prisma';
 
 async function main() {
-  const password = await hashPassword("password")
+  const password = await hashPassword('password');
 
-  const superAdmin = await prisma.user.upsert({
-    where: { email: 'ironsamurai786@gmail.com' },
-    update: {},
-    create: {
-      first_name: 'Super',
-      last_name: 'Admin',
-      phone_number: '+923018407613',
-      address: 'Admin HQ',
-      city: 'Gujrat',
-      state: 'Punjab',
-      zip_code: '50700',
-      country: 'Pakistan',
-      date_of_birth: new Date('1999-05-15'),
-      email: 'ironsamurai786@gmail.com',
-      password,
-      role: 'SUPERADMIN',
-      createdAt: new Date(),
-    },
+  const subsAdmin = await prisma.user.findFirst({
+    where: { email: 'ironsamurai786@gmail.com' }
   });
-
-  console.log('✅ Super admin created:', superAdmin.email);
+  if (!subsAdmin) {
+    const superAdmin = await prisma.user.create({
+      data: {
+        first_name: 'Super',
+        last_name: 'Admin',
+        phone_number: '+923018407613',
+        address: 'Admin HQ',
+        city: 'Gujrat',
+        state: 'Punjab',
+        zip_code: '50700',
+        country: 'Pakistan',
+        date_of_birth: new Date('1999-05-15'),
+        email: 'ironsamurai786@gmail.com',
+        password,
+        role: 'SUPERADMIN',
+        createdAt: new Date()
+      }
+    });
+    console.log('✅ Super admin created:', superAdmin.email);
+  }
 }
 
 main()

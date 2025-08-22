@@ -1,29 +1,26 @@
-import { verifyPassword } from "@/lib/authHelper";
-import prisma from "@/lib/prisma";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { atob } from "buffer";
-import { NextApiRequest, NextApiResponse } from "next";
-import { NextApiHandler } from "next";
-import NextAuth from "next-auth/next";
-import CredentialsProvider from "next-auth/providers/credentials";
-import { NextAuthOptions } from "next-auth/";
+import { verifyPassword } from '@/lib/authHelper';
+import prisma from '@/lib/prisma';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { atob } from 'buffer';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiHandler } from 'next';
+import NextAuth, { NextAuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials';
 
-const authHandler: NextApiHandler = (
+const authHandler: NextApiHandler = async (
   req: NextApiRequest,
   res: NextApiResponse
-) => NextAuth(req, res, options(req));
+) => {
+  return NextAuth(req, res, options);
+};
 export default authHandler;
-export const options = (req?: NextApiRequest): NextAuthOptions => ({
+export const options: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: "Credentials",
+      name: 'Credentials',
       credentials: {
-        username: {
-          label: "Email",
-          type: "text",
-          placeholder: "jsmith",
-        },
-        password: { label: "Password", type: "password" },
+        email: { label: 'Email', type: 'text', placeholder: 'jsmith' },
+        password: { label: 'Password', type: 'password' }
       },
       async authorize(credentials, req) {
         try {
@@ -31,70 +28,66 @@ export const options = (req?: NextApiRequest): NextAuthOptions => ({
             email: string;
             password: string;
           };
-          const dbUser: any = await prisma.user.findFirst({
+          password = atob(password);
+
+          const dbUser = await prisma.user.findFirst({
             where: {
-              email: email,
-            },
+              email
+            }
           });
-          if (dbUser === null) {
-            console.error("No user found for:", email);
-            return null;
+          if (!dbUser) {
+            throw new Error('no_user_found');
+          }
+          if (!dbUser.password) {
+            throw new Error('incorrect_password');
           }
           const passwordMatch = await verifyPassword(password, dbUser.password);
           if (!passwordMatch) {
-            console.error("Incorrect password for user:", email);
-            return null;
+            throw new Error('incorrect_password');
           }
-
-          return dbUser;
+          const user = {
+            ...dbUser,
+            name: dbUser.first_name + ' ' + dbUser.last_name,
+            id: dbUser.id
+          };
+          return user;
         } catch (error) {
-          console.error("Error in user authorization:", error);
+          console.log(error, 'eror while loggin in');
+
           throw error;
         }
-      },
-    }),
+      }
+    })
   ],
   session: {
-    strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
-    updateAge: 10 * 24 * 60 * 60,
+    strategy: 'jwt',
+    maxAge: 60 * 60,
+    updateAge: 30 * 60
   },
-  debug: process.env.ENV !== "PROD",
+  debug: process.env.ENV !== 'PROD',
   adapter: PrismaAdapter(prisma),
   secret: process.env.SECRET,
   callbacks: {
-    async session({ session, token, user }: any) {
-      if (session?.user) {
-        const dbUser = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            email: true,
-            role: true,
-          },
-        });
-        if (dbUser) {
-          session.user.id = dbUser.id;
-          session.user.role = dbUser.role;
-          session.user.first_name = dbUser.first_name;
-          session.user.last_name = dbUser.last_name;
-        }
-      }
-      return session;
+    jwt: ({ token, user, profile, trigger, session }) => {
+      return { ...token };
     },
-    async jwt({ token, user, account, profile }: any) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.steamId = user.steamId;
+    session: async ({ session, token }: any) => {
+      const userData = await prisma.user.findUnique({
+        where: { id: token.sub }
+      });
+      if (userData) {
+        return {
+          ...session,
+          user: {
+            ...session.user,
+            id: userData.id,
+            role: userData.role,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            email: userData.email
+          }
+        };
       }
-      return token;
-    },
-  },
-  pages: {
-    signIn: "/auth/signin",
-    error: "/404",
-  },
-});
+    }
+  }
+};
