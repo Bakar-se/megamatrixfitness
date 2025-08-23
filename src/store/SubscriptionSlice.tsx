@@ -102,6 +102,7 @@ export const toggleSubscriptionStatus = createAsyncThunk(
   async (
     params: {
       id: string;
+      status: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -110,7 +111,7 @@ export const toggleSubscriptionStatus = createAsyncThunk(
         '/api/subscriptions/togglesubscriptionstatus',
         params
       );
-      return { id: params.id };
+      return { id: params.id, status: params.status };
     } catch (error: any) {
       return rejectWithValue(error);
     }

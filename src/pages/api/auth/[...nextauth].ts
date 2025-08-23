@@ -28,7 +28,6 @@ export const options: NextAuthOptions = {
             email: string;
             password: string;
           };
-          password = atob(password);
 
           const dbUser = await prisma.user.findFirst({
             where: {

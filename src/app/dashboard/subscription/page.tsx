@@ -238,7 +238,8 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onConfirm: async () => {
                                     const result = await dispatch(
                                       toggleSubscriptionStatus({
-                                        id: row.id
+                                        id: row.id,
+                                        status: !row.is_active
                                       })
                                     );
                                   },

@@ -300,7 +300,8 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onConfirm: async () => {
                                     const result = await dispatch(
                                       toggleClientStatus({
-                                        id: row.id
+                                        id: row.id,
+                                        status: !row.is_active
                                       })
                                     );
                                   },

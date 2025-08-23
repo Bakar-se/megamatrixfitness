@@ -72,6 +72,7 @@ export const toggleClientStatus = createAsyncThunk(
   async (
     params: {
       id: string;
+      status: boolean;
     },
     { rejectWithValue }
   ) => {
@@ -80,7 +81,7 @@ export const toggleClientStatus = createAsyncThunk(
         '/api/clients/toggleclientstatus',
         params
       );
-      return { id: params.id };
+      return { id: params.id, status: params.status };
     } catch (error: any) {
       return rejectWithValue(error);
     }

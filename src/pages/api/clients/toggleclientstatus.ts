@@ -20,7 +20,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         id: req.body.id
       },
       data: {
-        is_active: !prisma.user.fields.is_active
+        is_active: req.body.status
       }
     });
     if (!user) {
