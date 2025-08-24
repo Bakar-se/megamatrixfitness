@@ -25,7 +25,6 @@ async function main() {
         createdAt: new Date()
       }
     });
-    console.log('✅ Super admin created:', superAdmin.email);
   }
 }
 

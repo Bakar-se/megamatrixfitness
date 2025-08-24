@@ -51,8 +51,6 @@ export const options: NextAuthOptions = {
           };
           return user;
         } catch (error) {
-          console.log(error, 'eror while loggin in');
-
           throw error;
         }
       }

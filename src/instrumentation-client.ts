@@ -2,10 +2,10 @@
 // The added config here will be used whenever a users loads a page in their browser.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
-import * as Sentry from "@sentry/nextjs";
+import * as Sentry from '@sentry/nextjs';
 
 Sentry.init({
-  dsn: "https://51f84ecbaecd588fcef2d18500cbad7f@o4509841011245056.ingest.us.sentry.io/4509841015701504",
+  dsn: 'https://51f84ecbaecd588fcef2d18500cbad7f@o4509841011245056.ingest.us.sentry.io/4509841015701504',
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: 1,
@@ -13,7 +13,7 @@ Sentry.init({
   enableLogs: true,
 
   // Setting this option to true will print useful information to the console while you're setting up Sentry.
-  debug: false,
+  debug: false
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

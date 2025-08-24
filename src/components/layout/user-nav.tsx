@@ -19,7 +19,7 @@ export function UserNav() {
 
   if (session?.user) {
     const user = session.user;
-    
+
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -56,7 +56,9 @@ export function UserNav() {
             <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/auth/signin' })}>
+          <DropdownMenuItem
+            onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+          >
             Sign Out
           </DropdownMenuItem>
         </DropdownMenuContent>

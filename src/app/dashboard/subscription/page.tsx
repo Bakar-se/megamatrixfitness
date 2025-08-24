@@ -41,7 +41,7 @@ import MultiSelectWithCheckbox from '@/components/shared/MultiSelectWithCheckbox
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
-const page = () => {
+const Page = () => {
   const { data: session, status }: any = useSession();
   const router = useRouter();
 
@@ -62,7 +62,7 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;
 
 interface StagesTabProps {
   session: any;
@@ -123,9 +123,13 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
               open: false
             });
           } else if (addSubscription.rejected.match(result)) {
-            toast.error(
-              (result.payload as any)?.message || 'Failed to add subscription'
-            );
+            const errorMessage =
+              result.payload &&
+              typeof result.payload === 'object' &&
+              'message' in result.payload
+                ? (result.payload as { message: string }).message
+                : 'Failed to add subscription';
+            toast.error(errorMessage);
           }
         } else {
           const result = await dispatch(
@@ -143,10 +147,13 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
               open: false
             });
           } else if (updateSubscription.rejected.match(result)) {
-            toast.error(
-              (result.payload as any)?.message ||
-                'Failed to update subscription'
-            );
+            const errorMessage =
+              result.payload &&
+              typeof result.payload === 'object' &&
+              'message' in result.payload
+                ? (result.payload as { message: string }).message
+                : 'Failed to update subscription';
+            toast.error(errorMessage);
           }
         }
       } catch (error) {
@@ -172,8 +179,6 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
     fetchData();
   }, [dispatch]);
 
-  console.log(formik.errors, 'ereoiru');
-
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
@@ -196,11 +201,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
           <CardContent>
             {loading ? (
               <div className='flex items-center justify-center py-12'>
-                <Loader
-                  isLoading={loading}
-                  size={32}
-                  text='Loading subscriptions...'
-                />
+                <Loader isLoading={loading} size={32} />
               </div>
             ) : (
               <div className='max-h-[55vh] overflow-y-auto'>
@@ -302,11 +303,18 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                               result
                                             )
                                           ) {
-                                            toast.error(
-                                              (result.payload as any)
-                                                ?.message ||
-                                                'Failed to update subscription status'
-                                            );
+                                            const errorMessage =
+                                              result.payload &&
+                                              typeof result.payload ===
+                                                'object' &&
+                                              'message' in result.payload
+                                                ? (
+                                                    result.payload as {
+                                                      message: string;
+                                                    }
+                                                  ).message
+                                                : 'Failed to update subscription status';
+                                            toast.error(errorMessage);
                                           }
                                         } catch (error) {
                                           toast.error(
@@ -374,11 +382,18 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                               result
                                             )
                                           ) {
-                                            toast.error(
-                                              (result.payload as any)
-                                                ?.message ||
-                                                'Failed to delete subscription'
-                                            );
+                                            const errorMessage =
+                                              result.payload &&
+                                              typeof result.payload ===
+                                                'object' &&
+                                              'message' in result.payload
+                                                ? (
+                                                    result.payload as {
+                                                      message: string;
+                                                    }
+                                                  ).message
+                                                : 'Failed to delete subscription';
+                                            toast.error(errorMessage);
                                           }
                                         } catch (error) {
                                           toast.error(

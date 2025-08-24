@@ -59,7 +59,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       )
     });
   } catch (error) {
-    console.log(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR);
     res.json({ message: 'Internal server error' });
   }

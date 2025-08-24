@@ -67,7 +67,6 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(StatusCodes.CREATED);
     res.json(subscription);
   } catch (error) {
-    console.log(error);
     res.status(StatusCodes.INTERNAL_SERVER_ERROR);
     res.json({ message: 'Internal server error' });
   }

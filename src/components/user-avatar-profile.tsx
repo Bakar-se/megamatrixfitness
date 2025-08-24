@@ -16,9 +16,17 @@ export function UserAvatarProfile({
   showInfo = false,
   user
 }: UserAvatarProfileProps) {
-  const fullName = user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : '';
-  const initials = fullName ? fullName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U';
-  
+  const fullName = user
+    ? `${user.first_name || ''} ${user.last_name || ''}`.trim()
+    : '';
+  const initials = fullName
+    ? fullName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+    : 'U';
+
   return (
     <div className='flex items-center gap-2'>
       <Avatar className={className}>
@@ -31,9 +39,7 @@ export function UserAvatarProfile({
       {showInfo && (
         <div className='grid flex-1 text-left text-sm leading-tight'>
           <span className='truncate font-semibold'>{fullName}</span>
-          <span className='truncate text-xs'>
-            {user?.email || ''}
-          </span>
+          <span className='truncate text-xs'>{user?.email || ''}</span>
         </div>
       )}
     </div>

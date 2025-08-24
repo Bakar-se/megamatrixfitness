@@ -5,6 +5,7 @@
 Your NextAuth.js setup is **almost complete**! Here's what's already configured:
 
 ### ✅ What's Working
+
 - **NextAuth API route**: `/api/auth/[...nextauth].ts` - Fully configured with credentials provider
 - **Database schema**: Prisma schema with User model and proper fields
 - **Password handling**: bcryptjs integration for secure password hashing/verification
@@ -16,6 +17,7 @@ Your NextAuth.js setup is **almost complete**! Here's what's already configured:
 ### 🔧 What You Need to Do
 
 #### 1. Create Environment Variables
+
 Create a `.env.local` file in your project root with:
 
 ```bash
@@ -28,11 +30,13 @@ DATABASE_URL="postgresql://username:password@localhost:5432/your_database_name"
 ```
 
 **Generate NEXTAUTH_SECRET:**
+
 ```bash
 openssl rand -base64 32
 ```
 
 #### 2. Set Up Database
+
 ```bash
 # Install dependencies (if not already done)
 npm install
@@ -46,13 +50,16 @@ npx prisma db seed
 ```
 
 #### 3. Test User Credentials
+
 After running the seed:
+
 - **Email**: `ironsamurai786@gmail.com`
 - **Password**: `password`
 
 ## 🚀 How to Test
 
 1. **Start the development server:**
+
    ```bash
    npm run dev
    ```
@@ -60,6 +67,7 @@ After running the seed:
 2. **Navigate to:** `http://localhost:3000/auth/signin`
 
 3. **Login with test credentials:**
+
    - Email: `ironsamurai786@gmail.com`
    - Password: `password`
 
@@ -76,6 +84,7 @@ After running the seed:
 ## 🔐 Protected Routes
 
 The following routes now require authentication:
+
 - `/dashboard/*` - All dashboard pages
 - `/profile/*` - Profile management
 - `/products/*` - Product management
@@ -88,11 +97,13 @@ The following routes now require authentication:
 ### Common Issues:
 
 1. **"Invalid email or password"**
+
    - Check if database is seeded
    - Verify DATABASE_URL is correct
    - Ensure Prisma client is generated
 
 2. **"NextAuth Secret not set"**
+
    - Make sure NEXTAUTH_SECRET is in `.env.local`
    - Restart your development server
 
@@ -102,6 +113,7 @@ The following routes now require authentication:
    - Run `npx prisma generate` and `npx prisma db push`
 
 ### Debug Mode:
+
 NextAuth debug mode is enabled in development. Check your console for detailed logs.
 
 ## 🔄 Next Steps (Optional)

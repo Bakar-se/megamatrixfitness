@@ -1,1 +1,11 @@
-pnpm run build
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "🔍 Running pre-push checks..."
+echo "📝 Formatting code..."
+npm run format
+
+echo "🔧 Fixing linting issues..."
+npm run lint:fix
+
+echo "✅ Pre-push checks completed successfully!"

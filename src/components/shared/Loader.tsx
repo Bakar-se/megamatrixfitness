@@ -6,15 +6,9 @@ interface LoaderProps {
   isLoading: boolean;
   size?: number;
   className?: string;
-  text?: string;
 }
 
-const Loader: React.FC<LoaderProps> = ({
-  isLoading,
-  size = 24,
-  className,
-  text = 'Loading...'
-}) => {
+const Loader: React.FC<LoaderProps> = ({ isLoading, size = 24, className }) => {
   if (!isLoading) return null;
 
   const sizeClasses = {

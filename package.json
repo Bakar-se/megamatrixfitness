@@ -1,9 +1,9 @@
 {
-  "name": "next-shadcn-dashboard-starter",
+  "name": "MegaMatrixFitness",
   "version": "1.0.0",
   "private": true,
   "author": {
-    "name": "Kiran",
+    "name": "Developers",
     "url": "https://github.com/Kiranism"
   },
   "scripts": {
@@ -11,11 +11,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "lint:fix": "eslint src --fix && pnpm format",
+    "lint:fix": "eslint src --fix && npm run format",
     "lint:strict": "eslint --max-warnings=0 src",
     "format": "prettier --write .",
     "format:check": "prettier -c -w .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "pre-push": "npm run lint:fix"
   },
   "lint-staged": {
     "**/*.{js,jsx,tsx,ts,css,less,scss,sass}": [
