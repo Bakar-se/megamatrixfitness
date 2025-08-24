@@ -9,18 +9,21 @@ The application implements a comprehensive role-based access control (RBAC) syst
 ## User Roles
 
 ### SUPERADMIN
+
 - **Highest level of access**
 - Can access all features and pages
 - Can manage subscriptions, products, clients, and all system settings
 - Has full administrative privileges
 
 ### OWNER
+
 - **Business owner level access**
 - Can manage subscriptions, products, and clients
 - Cannot access super admin features
 - Has business-level administrative privileges
 
 ### MEMBER
+
 - **Basic user access**
 - Can view dashboard and clients
 - Can access Kanban board
@@ -29,26 +32,31 @@ The application implements a comprehensive role-based access control (RBAC) syst
 ## Navigation Structure
 
 ### Dashboard
+
 - **URL**: `/dashboard/overview`
 - **Access**: All roles (`SUPERADMIN`, `OWNER`, `MEMBER`)
 - **Description**: Main dashboard with overview statistics
 
 ### Subscriptions
+
 - **URL**: `/dashboard/subscription`
 - **Access**: `SUPERADMIN`, `OWNER` only
 - **Description**: Manage subscription plans and features
 
 ### Clients
+
 - **URL**: `/dashboard/clients`
 - **Access**: All roles (`SUPERADMIN`, `OWNER`, `MEMBER`)
 - **Description**: View and manage client information
 
 ### Products
+
 - **URL**: `/dashboard/product`
 - **Access**: `SUPERADMIN`, `OWNER` only
 - **Description**: Manage product catalog and inventory
 
 ### Kanban
+
 - **URL**: `/dashboard/kanban`
 - **Access**: All roles (`SUPERADMIN`, `OWNER`, `MEMBER`)
 - **Description**: Project management and task tracking
@@ -104,14 +112,16 @@ The `useRoleBasedNavigation` hook in `src/hooks/use-role-based-nav.ts` provides:
 export function useRoleBasedNavigation() {
   const { data: session } = useSession();
   const { userRole } = useRoleCheck(session);
-  
+
   const filteredNavItems = getFilteredNavItems(navItems, userRole);
-  const canAccessRoute = (route: string): boolean => { /* ... */ };
-  
+  const canAccessRoute = (route: string): boolean => {
+    /* ... */
+  };
+
   return {
     userRole,
     filteredNavItems,
-    canAccessRoute,
+    canAccessRoute
     // ... other utilities
   };
 }
@@ -140,7 +150,7 @@ The `AppSidebar` component automatically filters navigation items:
 ```typescript
 export default function AppSidebar() {
   const { filteredNavItems } = useRoleBasedNavigation();
-  
+
   return (
     <Sidebar>
       {/* Only shows items user has access to */}
@@ -189,11 +199,11 @@ import { useRoleBasedNavigation } from '@/hooks/use-role-based-nav';
 
 function MyComponent() {
   const { canAccessRoute } = useRoleBasedNavigation();
-  
+
   if (canAccessRoute('/dashboard/subscription')) {
     return <SubscriptionLink />;
   }
-  
+
   return null;
 }
 ```

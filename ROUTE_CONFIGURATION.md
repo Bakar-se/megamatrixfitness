@@ -9,6 +9,7 @@ The route configuration system provides a centralized way to manage which user r
 ## Route Categories
 
 ### 1. SUPERADMIN Routes
+
 **Highest level access - only SUPERADMIN users can access**
 
 ```typescript
@@ -47,6 +48,7 @@ export const SUPERADMIN_ROUTES: RouteConfig[] = [
 ```
 
 ### 2. OWNER Routes
+
 **Business owner level access - SUPERADMIN and OWNER users can access**
 
 ```typescript
@@ -85,6 +87,7 @@ export const OWNER_ROUTES: RouteConfig[] = [
 ```
 
 ### 3. MEMBER Routes
+
 **Basic user access - all authenticated users can access**
 
 ```typescript
@@ -118,6 +121,7 @@ export const MEMBER_ROUTES: RouteConfig[] = [
 ```
 
 ### 4. Authenticated Routes
+
 **Routes that require any authenticated user**
 
 ```typescript
@@ -146,15 +150,16 @@ Each route is defined using the `RouteConfig` interface:
 
 ```typescript
 export interface RouteConfig {
-  path: string;           // The route path to match
-  roles: UserRole[];      // Array of roles that can access this route
-  description: string;    // Human-readable description of the route
+  path: string; // The route path to match
+  roles: UserRole[]; // Array of roles that can access this route
+  description: string; // Human-readable description of the route
 }
 ```
 
 ## Helper Functions
 
 ### 1. `canAccessRoute(userRole, routePath)`
+
 Checks if a user with a specific role can access a given route.
 
 ```typescript
@@ -170,6 +175,7 @@ const canAccess = canAccessRoute('MEMBER', '/dashboard/subscription');
 ```
 
 ### 2. `getRouteConfig(path)`
+
 Gets the configuration for a specific route.
 
 ```typescript
@@ -180,6 +186,7 @@ const config = getRouteConfig('/dashboard/subscription');
 ```
 
 ### 3. `getRequiredRoles(path)`
+
 Gets the required roles for a specific route.
 
 ```typescript
@@ -203,19 +210,19 @@ export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
-    
+
     // If no token, redirect to signin
     if (!token) {
       return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
 
     const userRole = token.role as UserRole;
-    
+
     // Check if user can access the requested route
     if (!canAccessRoute(userRole, pathname)) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
-    
+
     return NextResponse.next();
   },
   {
@@ -286,12 +293,12 @@ import { useRoleBasedNavigation } from '@/hooks/use-role-based-nav';
 
 function MyComponent() {
   const { canAccessRoute } = useRoleBasedNavigation();
-  
+
   // Show subscription link only if user has access
   if (canAccessRoute('/dashboard/subscription')) {
     return <SubscriptionLink />;
   }
-  
+
   return null;
 }
 ```
