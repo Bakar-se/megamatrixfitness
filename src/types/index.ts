@@ -1,4 +1,5 @@
 import { Icons } from '@/components/icons';
+import { UserRole } from '@/lib/authUtils';
 
 export interface NavItem {
   title: string;
@@ -11,6 +12,7 @@ export interface NavItem {
   description?: string;
   isActive?: boolean;
   items?: NavItem[];
+  roles?: UserRole[]; // Array of roles that can access this item
 }
 
 export interface NavItemWithChildren extends NavItem {

@@ -39,12 +39,14 @@ import {
   IconPhotoUp,
   IconUserCircle
 } from '@tabler/icons-react';
-import { SignOutButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import { signOut, useSession } from 'next-auth/react';
+import { useRoleCheck } from '@/lib/authUtils';
+import { useRoleBasedNavigation } from '@/hooks/use-role-based-nav';
 export const company = {
   name: 'Acme Inc',
   logo: IconPhotoUp,
@@ -61,6 +63,9 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
   const router = useRouter();
+  const { data: session } = useSession();
+  const { userRole } = useRoleCheck(session);
+  const { filteredNavItems } = useRoleBasedNavigation();
 
   React.useEffect(() => {
     // Side effects based on sidebar state changes
@@ -69,18 +74,22 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
-        <OrgSwitcher
-          tenants={tenants}
-          defaultTenant={tenants[0]}
-          onTenantSwitch={() => {}}
-        />
+        {userRole === 'OWNER' && (
+          <OrgSwitcher
+            tenants={tenants}
+            defaultTenant={tenants[0]}
+            onTenantSwitch={() => {}}
+          />
+        )}
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
-              const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+            {filteredNavItems.map((item) => {
+              const Icon = item.icon
+                ? Icons[item.icon as keyof typeof Icons]
+                : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
                   key={item.title}
@@ -101,7 +110,7 @@ export default function AppSidebar() {
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
+                        {item.items?.map((subItem: any) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
                               asChild
@@ -154,7 +163,10 @@ export default function AppSidebar() {
                 sideOffset={4}
               >
                 <DropdownMenuLabel className='p-0 font-normal'>
-                  <div className='px-1 py-1.5'></div>
+                  <div className='flex items-center px-1 py-1.5'>
+                    <IconUserCircle className='mr-2 h-4 w-4' />
+                    {session?.user?.name}
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
@@ -165,19 +177,13 @@ export default function AppSidebar() {
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconCreditCard className='mr-2 h-4 w-4' />
-                    Billing
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconBell className='mr-2 h-4 w-4' />
-                    Notifications
-                  </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: '/auth/signin' })}
+                >
                   <IconLogout className='mr-2 h-4 w-4' />
-                  <SignOutButton redirectUrl='/auth/sign-in' />
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

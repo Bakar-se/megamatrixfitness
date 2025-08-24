@@ -11,7 +11,7 @@ import Link from 'next/link';
 
 export default function UnauthorizedPage() {
   return (
-    <div className='flex min-h-screen items-center justify-center bg-gray-50 p-4 dark:bg-gray-900'>
+    <div className='flex min-h-screen items-center justify-center'>
       <Card className='w-full max-w-md'>
         <CardHeader className='text-center'>
           <div className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900'>
@@ -37,12 +37,6 @@ export default function UnauthorizedPage() {
               <Button className='w-full' variant='default'>
                 <Home className='mr-2 h-4 w-4' />
                 Go to Dashboard
-              </Button>
-            </Link>
-
-            <Link href='/auth/signin'>
-              <Button className='w-full' variant='outline'>
-                Sign In with Different Account
               </Button>
             </Link>
           </div>

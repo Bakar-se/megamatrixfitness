@@ -19,7 +19,7 @@ export function UserNav() {
 
   if (session?.user) {
     const user = session.user;
-
+    console.log(user);
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -40,9 +40,6 @@ export function UserNav() {
               </p>
               <p className='text-muted-foreground text-xs leading-none'>
                 {user.email}
-              </p>
-              <p className='text-muted-foreground text-xs leading-none capitalize'>
-                Role: {user.role.toLowerCase()}
               </p>
             </div>
           </DropdownMenuLabel>

@@ -47,7 +47,10 @@ export const options: NextAuthOptions = {
           const user = {
             ...dbUser,
             name: dbUser.first_name + ' ' + dbUser.last_name,
-            id: dbUser.id
+            id: dbUser.id,
+            role: dbUser.role,
+            first_name: dbUser.first_name,
+            last_name: dbUser.last_name
           };
           return user;
         } catch (error) {
@@ -65,26 +68,33 @@ export const options: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   secret: process.env.SECRET,
   callbacks: {
-    jwt: ({ token, user, profile, trigger, session }) => {
-      return { ...token };
+    jwt: async ({ token, user, profile, trigger, session }) => {
+      // If user is signing in for the first time, add role to token
+      if (user) {
+        token.role = user.role;
+        token.first_name = user.first_name;
+        token.last_name = user.last_name;
+      }
+
+      // Handle session updates
+      if (trigger === 'update' && session) {
+        token.role = session.user.role;
+        token.first_name = session.user.first_name;
+        token.last_name = session.user.last_name;
+      }
+
+      return token;
     },
     session: async ({ session, token }: any) => {
-      const userData = await prisma.user.findUnique({
-        where: { id: token.sub }
-      });
-      if (userData) {
-        return {
-          ...session,
-          user: {
-            ...session.user,
-            id: userData.id,
-            role: userData.role,
-            first_name: userData.first_name,
-            last_name: userData.last_name,
-            email: userData.email
-          }
-        };
+      // Add role and other user data to session
+      if (token) {
+        session.user.id = token.sub;
+        session.user.role = token.role;
+        session.user.first_name = token.first_name;
+        session.user.last_name = token.last_name;
       }
+
+      return session;
     }
   }
 };

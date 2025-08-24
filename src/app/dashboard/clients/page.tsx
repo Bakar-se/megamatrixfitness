@@ -53,6 +53,11 @@ import { fetchSubscriptions } from '@/store/SubscriptionSlice';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
+import {
+  OwnerOnly,
+  OwnerOrHigher,
+  SuperAdminOnly
+} from '@/components/permission-guard';
 const Page = () => {
   const { data: session, status }: any = useSession();
   const router = useRouter();
@@ -67,7 +72,15 @@ const Page = () => {
     <>
       {session && (
         <Suspense>
-          <ClientListing session={session} />
+          <SuperAdminOnly
+            fallback={
+              <div className='p-8 text-center'>
+                Access Denied. Only super admins can access this page.
+              </div>
+            }
+          >
+            <ClientListing session={session} />
+          </SuperAdminOnly>
         </Suspense>
       )}
     </>

@@ -19,61 +19,45 @@ export const navItems: NavItem[] = [
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: [], // Empty array as there are no child items for Dashboard
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'] // All roles can access Dashboard
   },
   {
-    title: 'Subscriptions ',
+    title: 'Subscriptions',
     url: '/dashboard/subscription',
-    icon: 'dashboard',
+    icon: 'subscriptions',
     isActive: false,
-    shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    shortcut: ['s', 's'],
+    items: [], // Empty array as there are no child items for Subscriptions
+    roles: ['SUPERADMIN'] // Only SUPERADMIN and OWNER can manage subscriptions
   },
   {
     title: 'Clients',
     url: '/dashboard/clients',
-    icon: 'dashboard',
+    icon: 'clients',
     isActive: false,
-    shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
-  },
-  {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
-    title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
-    icon: 'billing',
-    isActive: true,
-
-    items: [
-      {
-        title: 'Profile',
-        url: '/dashboard/profile',
-        icon: 'userPen',
-        shortcut: ['m', 'm']
-      },
-      {
-        title: 'Login',
-        shortcut: ['l', 'l'],
-        url: '/',
-        icon: 'login'
-      }
-    ]
-  },
-  {
-    title: 'Kanban',
-    url: '/dashboard/kanban',
-    icon: 'kanban',
-    shortcut: ['k', 'k'],
-    isActive: false,
-    items: [] // No child items
+    shortcut: ['c', 'c'],
+    items: [], // Empty array as there are no child items for Clients
+    roles: ['SUPERADMIN'] // All roles can view clients
   }
+  // {
+  //   title: 'Products',
+  //   url: '/dashboard/product',
+  //   icon: 'product',
+  //   shortcut: ['p', 'p'],
+  //   isActive: false,
+  //   items: [], // No child items
+  //   roles: ['SUPERADMIN', 'OWNER'] // Only SUPERADMIN and OWNER can manage products
+  // },
+  // {
+  //   title: 'Kanban',
+  //   url: '/dashboard/kanban',
+  //   icon: 'kanban',
+  //   shortcut: ['k', 'k'],
+  //   isActive: false,
+  //   items: [], // No child items
+  //   roles: ['SUPERADMIN', 'OWNER', 'MEMBER'] // All roles can access Kanban board
+  // }
 ];
 
 export interface SaleUser {

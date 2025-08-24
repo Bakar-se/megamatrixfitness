@@ -1,0 +1,190 @@
+import { UserRole } from '@/lib/authUtils';
+
+// Define route access patterns
+export interface RouteConfig {
+  path: string;
+  roles: UserRole[];
+  description: string;
+}
+
+// SUPERADMIN only routes - highest level access
+export const SUPERADMIN_ROUTES: RouteConfig[] = [
+  {
+    path: '/dashboard/subscription',
+    roles: ['SUPERADMIN'],
+    description: 'Manage subscription plans and features'
+  },
+  {
+    path: '/dashboard/product',
+    roles: ['SUPERADMIN'],
+    description: 'Manage product catalog and inventory'
+  },
+  {
+    path: '/dashboard/clients',
+    roles: ['SUPERADMIN'],
+    description: 'System administration panel'
+  },
+  {
+    path: '/system-settings',
+    roles: ['SUPERADMIN'],
+    description: 'Global system configuration'
+  },
+  {
+    path: '/user-management',
+    roles: ['SUPERADMIN'],
+    description: 'Manage all users and roles'
+  },
+  {
+    path: '/api/admin',
+    roles: ['SUPERADMIN'],
+    description: 'Admin API endpoints'
+  }
+];
+
+// OWNER and above routes - business owner level access
+export const OWNER_ROUTES: RouteConfig[] = [
+  {
+    path: '/dashboard/subscription',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Manage subscription plans and features'
+  },
+  {
+    path: '/dashboard/product',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Manage product catalog and inventory'
+  },
+  {
+    path: '/dashboard/clients',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Manage client information and relationships'
+  },
+  {
+    path: '/business-settings',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Business-specific configuration'
+  },
+  {
+    path: '/billing',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Billing and payment management'
+  },
+  {
+    path: '/api/business',
+    roles: ['SUPERADMIN', 'OWNER'],
+    description: 'Business API endpoints'
+  }
+];
+
+// MEMBER and above routes - basic user access
+export const MEMBER_ROUTES: RouteConfig[] = [
+  {
+    path: '/dashboard/overview',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'Dashboard overview and statistics'
+  },
+  {
+    path: '/dashboard/clients',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'View client information'
+  },
+  {
+    path: '/dashboard/kanban',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'Project management and task tracking'
+  },
+  {
+    path: '/profile',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'User profile management'
+  },
+  {
+    path: '/api/user',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'User-specific API endpoints'
+  }
+];
+
+// Routes that require any authenticated user
+export const AUTHENTICATED_ROUTES: RouteConfig[] = [
+  {
+    path: '/dashboard',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'Main dashboard area'
+  },
+  {
+    path: '/profile',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'User profile and settings'
+  },
+  {
+    path: '/settings',
+    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
+    description: 'User preferences and settings'
+  }
+];
+
+// Helper functions for route checking
+export function canAccessRoute(
+  userRole: UserRole | null,
+  routePath: string
+): boolean {
+  if (!userRole) return false;
+
+  // Check SUPERADMIN routes first
+  if (SUPERADMIN_ROUTES.some((route) => routePath.startsWith(route.path))) {
+    const routeConfig = SUPERADMIN_ROUTES.find((route) =>
+      routePath.startsWith(route.path)
+    );
+    return routeConfig ? routeConfig.roles.includes(userRole) : false;
+  }
+
+  // Check OWNER routes
+  if (OWNER_ROUTES.some((route) => routePath.startsWith(route.path))) {
+    const routeConfig = OWNER_ROUTES.find((route) =>
+      routePath.startsWith(route.path)
+    );
+    return routeConfig ? routeConfig.roles.includes(userRole) : false;
+  }
+
+  // Check MEMBER routes
+  if (MEMBER_ROUTES.some((route) => routePath.startsWith(route.path))) {
+    const routeConfig = MEMBER_ROUTES.find((route) =>
+      routePath.startsWith(route.path)
+    );
+    return routeConfig ? routeConfig.roles.includes(userRole) : false;
+  }
+
+  // Check authenticated routes
+  if (AUTHENTICATED_ROUTES.some((route) => routePath.startsWith(route.path))) {
+    const routeConfig = AUTHENTICATED_ROUTES.find((route) =>
+      routePath.startsWith(route.path)
+    );
+    return routeConfig ? routeConfig.roles.includes(userRole) : false;
+  }
+
+  // Default: allow access if user has any role
+  return true;
+}
+
+export function getRouteConfig(path: string): RouteConfig | null {
+  const allRoutes = [
+    ...SUPERADMIN_ROUTES,
+    ...OWNER_ROUTES,
+    ...MEMBER_ROUTES,
+    ...AUTHENTICATED_ROUTES
+  ];
+  return allRoutes.find((route) => path.startsWith(route.path)) || null;
+}
+
+export function getRequiredRoles(path: string): UserRole[] {
+  const config = getRouteConfig(path);
+  return config ? config.roles : [];
+}
+
+// Export all routes for easy access
+export const ALL_ROUTES = {
+  SUPERADMIN: SUPERADMIN_ROUTES,
+  OWNER: OWNER_ROUTES,
+  MEMBER: MEMBER_ROUTES,
+  AUTHENTICATED: AUTHENTICATED_ROUTES
+};
