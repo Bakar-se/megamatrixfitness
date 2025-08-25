@@ -15,6 +15,11 @@ const authHandler: NextApiHandler = async (
 };
 export default authHandler;
 export const options: NextAuthOptions = {
+  pages: {
+    signIn: '/auth/signin',
+    signOut: '/auth/signin',
+    error: '/auth/signin'
+  },
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -61,12 +66,12 @@ export const options: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 60 * 60,
-    updateAge: 30 * 60
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 30 * 60 // 30 minutes (you can keep or adjust this)
   },
   debug: process.env.ENV !== 'PROD',
   adapter: PrismaAdapter(prisma),
-  secret: process.env.SECRET,
+  secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
     jwt: async ({ token, user, profile, trigger, session }) => {
       // If user is signing in for the first time, add role to token

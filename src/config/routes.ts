@@ -10,6 +10,11 @@ export interface RouteConfig {
 // SUPERADMIN only routes - highest level access
 export const SUPERADMIN_ROUTES: RouteConfig[] = [
   {
+    path: '/dashboard/overview',
+    roles: ['SUPERADMIN'],
+    description: 'Dashboard overview and statistics'
+  },
+  {
     path: '/dashboard/subscription',
     roles: ['SUPERADMIN'],
     description: 'Manage subscription plans and features'
@@ -44,65 +49,14 @@ export const SUPERADMIN_ROUTES: RouteConfig[] = [
 // OWNER and above routes - business owner level access
 export const OWNER_ROUTES: RouteConfig[] = [
   {
-    path: '/dashboard/subscription',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Manage subscription plans and features'
-  },
-  {
-    path: '/dashboard/product',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Manage product catalog and inventory'
-  },
-  {
-    path: '/dashboard/clients',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Manage client information and relationships'
-  },
-  {
-    path: '/business-settings',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Business-specific configuration'
-  },
-  {
-    path: '/billing',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Billing and payment management'
-  },
-  {
-    path: '/api/business',
-    roles: ['SUPERADMIN', 'OWNER'],
-    description: 'Business API endpoints'
+    path: '/dashboard/locations',
+    roles: ['OWNER'],
+    description: 'Manage locations'
   }
 ];
 
 // MEMBER and above routes - basic user access
-export const MEMBER_ROUTES: RouteConfig[] = [
-  {
-    path: '/dashboard/overview',
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
-    description: 'Dashboard overview and statistics'
-  },
-  {
-    path: '/dashboard/clients',
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
-    description: 'View client information'
-  },
-  {
-    path: '/dashboard/kanban',
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
-    description: 'Project management and task tracking'
-  },
-  {
-    path: '/profile',
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
-    description: 'User profile management'
-  },
-  {
-    path: '/api/user',
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
-    description: 'User-specific API endpoints'
-  }
-];
+export const MEMBER_ROUTES: RouteConfig[] = [];
 
 // Routes that require any authenticated user
 export const AUTHENTICATED_ROUTES: RouteConfig[] = [
@@ -120,6 +74,11 @@ export const AUTHENTICATED_ROUTES: RouteConfig[] = [
     path: '/settings',
     roles: ['SUPERADMIN', 'OWNER', 'MEMBER'],
     description: 'User preferences and settings'
+  },
+  {
+    path: '/dashboard/locations',
+    roles: ['OWNER'],
+    description: 'Manage locations'
   }
 ];
 

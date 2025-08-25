@@ -45,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         profile_picture: req.body.profile_picture,
         subscription_id: req.body.subscription_id,
         billing_model: req.body.billing_model,
-        role: 'MEMBER',
+        role: 'OWNER',
         cnic: req.body.cnic?.startsWith('data:')
           ? fileSaver(
               req.body.cnic,

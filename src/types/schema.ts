@@ -31,6 +31,12 @@ export interface Gym {
   id: string;
   name: string;
   owner_id: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+  phone_number?: string;
   createdAt: string;
   updatedAt: string;
   is_active: boolean;

@@ -1,3 +1,4 @@
+'use client';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,8 +9,10 @@ import {
 } from '@/components/ui/card';
 import { AlertTriangle, Home, Shield } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function UnauthorizedPage() {
+  const router = useRouter();
   return (
     <div className='flex min-h-screen items-center justify-center'>
       <Card className='w-full max-w-md'>
@@ -33,12 +36,14 @@ export default function UnauthorizedPage() {
           </div>
 
           <div className='flex flex-col space-y-2'>
-            <Link href='/dashboard/overview'>
-              <Button className='w-full' variant='default'>
-                <Home className='mr-2 h-4 w-4' />
-                Go to Dashboard
-              </Button>
-            </Link>
+            <Button
+              onClick={() => router.back()}
+              className='w-full'
+              variant='default'
+            >
+              <Home className='mr-2 h-4 w-4' />
+              Go to Dashboard
+            </Button>
           </div>
 
           <p className='text-center text-xs text-gray-500 dark:text-gray-400'>

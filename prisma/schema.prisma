@@ -54,6 +54,12 @@ model Gym {
   id        String   @id @default(uuid())
   name      String
   owner_id  String
+  address   String?
+  city      String?
+  state     String?
+  zip_code  String?
+  country   String?
+  phone_number String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   is_active Boolean @default(true)

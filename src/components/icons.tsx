@@ -33,7 +33,8 @@ import {
   IconBrandGithub,
   IconUsers,
   IconUserPlus,
-  IconCarambola
+  IconCarambola,
+  IconMapPin
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -72,5 +73,6 @@ export const Icons = {
   check: IconCheck,
   users: IconUsers,
   subscriptions: IconCarambola,
-  clients: IconUsers
+  clients: IconUsers,
+  location: IconMapPin
 };

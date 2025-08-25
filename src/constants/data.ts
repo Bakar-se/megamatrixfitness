@@ -20,17 +20,17 @@ export const navItems: NavItem[] = [
     isActive: false,
     shortcut: ['d', 'd'],
     items: [], // Empty array as there are no child items for Dashboard
-    roles: ['SUPERADMIN', 'OWNER', 'MEMBER'] // All roles can access Dashboard
+    roles: ['SUPERADMIN'] // All roles can access Dashboard
   },
-  {
-    title: 'Subscriptions',
-    url: '/dashboard/subscription',
-    icon: 'subscriptions',
-    isActive: false,
-    shortcut: ['s', 's'],
-    items: [], // Empty array as there are no child items for Subscriptions
-    roles: ['SUPERADMIN'] // Only SUPERADMIN and OWNER can manage subscriptions
-  },
+  // {
+  //   title: 'Subscriptions',
+  //   url: '/dashboard/subscription',
+  //   icon: 'subscriptions',
+  //   isActive: false,
+  //   shortcut: ['s', 's'],
+  //   items: [], // Empty array as there are no child items for Subscriptions
+  //   roles: ['SUPERADMIN'] // Only SUPERADMIN and OWNER can manage subscriptions
+  // },
   {
     title: 'Clients',
     url: '/dashboard/clients',
@@ -39,6 +39,15 @@ export const navItems: NavItem[] = [
     shortcut: ['c', 'c'],
     items: [], // Empty array as there are no child items for Clients
     roles: ['SUPERADMIN'] // All roles can view clients
+  },
+  {
+    title: 'Locations',
+    url: '/dashboard/locations',
+    icon: 'location',
+    isActive: false,
+    shortcut: ['l', 'l'],
+    items: [], // Empty array as there are no child items for Locations
+    roles: ['OWNER'] // Only OWNER can view locations
   }
   // {
   //   title: 'Products',
