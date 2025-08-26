@@ -136,6 +136,7 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
             toast.success('Location added successfully!');
             formik.resetForm();
             setDialogOpen(false);
+            window.location.reload();
           } else if (addGym.rejected.match(result)) {
             const errorMessage =
               result.payload &&
@@ -162,6 +163,7 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
             toast.success('Location updated successfully!');
             formik.resetForm();
             setDialogOpen(false);
+            window.location.reload();
           } else if (updateGym.rejected.match(result)) {
             const errorMessage =
               result.payload &&
@@ -219,6 +221,7 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
           const result = await dispatch(deleteGym(gym.id));
           if (deleteGym.fulfilled.match(result)) {
             toast.success('Location deleted successfully!');
+            window.location.reload();
           } else if (deleteGym.rejected.match(result)) {
             const errorMessage =
               result.payload &&
@@ -333,7 +336,9 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
                     <Badge
                       variant={gym.is_active ? 'default' : 'outline'}
                       className={
-                        gym.is_active ? 'bg-green-500' : 'text-destructive'
+                        gym.is_active
+                          ? 'bg-primary/10 text-primary'
+                          : 'text-destructive'
                       }
                     >
                       {gym.is_active ? 'Active' : 'Inactive'}

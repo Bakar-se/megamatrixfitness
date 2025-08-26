@@ -86,6 +86,7 @@ export const options: NextAuthOptions = {
         token.role = session.user.role;
         token.first_name = session.user.first_name;
         token.last_name = session.user.last_name;
+        token.selected_location_id = session.user.selected_location_id;
       }
 
       return token;
@@ -97,6 +98,7 @@ export const options: NextAuthOptions = {
         session.user.role = token.role;
         session.user.first_name = token.first_name;
         session.user.last_name = token.last_name;
+        session.user.selected_location_id = token.selected_location_id;
       }
 
       return session;

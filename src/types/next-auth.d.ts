@@ -20,6 +20,7 @@ declare module 'next-auth' {
       role: string;
       createdAt: Date;
       updatedAt: Date;
+      selected_location_id: string;
     } & {
       name?: string | null;
       image?: string | null;

@@ -10,16 +10,28 @@ export default withAuth(
 
     // If no token, redirect to signin
     if (!token) {
+      console.log(
+        `Middleware: No token found, redirecting to signin from ${pathname}`
+      );
       return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
 
     const userRole = token.role as UserRole;
+    console.log(
+      `Middleware: Checking access for ${pathname} with role ${userRole}`
+    );
 
     // Check if user can access the requested route
     if (!canAccessRoute(userRole, pathname)) {
+      console.log(
+        `Middleware: Access denied for ${pathname} with role ${userRole}`
+      );
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 
+    console.log(
+      `Middleware: Access granted for ${pathname} with role ${userRole}`
+    );
     return NextResponse.next();
   },
   {
@@ -29,18 +41,11 @@ export default withAuth(
   }
 );
 
-// Configure which routes to protect
+// Configure which routes to protect - be more specific
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     * - auth routes (signin, signup)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|public|auth/signin|auth/signup).*)'
+    // Protect dashboard routes
+    '/dashboard/:path*',
+    '/((?!api|_next/static|_next/image|favicon.ico|public|auth).*)'
   ]
 };

@@ -27,8 +27,8 @@ model User {
   date_of_birth   DateTime
   cnic            String?
   profile_picture String?
-  email           String        
-  password        String
+  email           String?        
+  password        String?
   role            Role
   subscription_id String?
   billing_model   BillingModel?

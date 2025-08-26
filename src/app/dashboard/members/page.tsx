@@ -3,20 +3,20 @@ import { useSession } from 'next-auth/react';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '@/store/Store';
-import { Feature, Subscription } from '@/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertModal } from '@/components/shared/AlertModal';
+import 'react-phone-input-2/lib/style.css';
+import PhoneInput from 'react-phone-input-2';
 import * as yup from 'yup';
 import { useFormik } from 'formik';
 import {
-  addSubscription,
-  fetchSubscriptions,
-  fetchFeatures,
-  toggleSubscriptionStatus,
-  updateSubscription,
-  deleteSubscription
-} from '@/store/SubscriptionSlice';
+  addMember,
+  fetchMembers,
+  toggleMemberStatus,
+  updateMember,
+  deleteMember
+} from '@/store/MemberSlice';
 import {
   Dialog,
   DialogTitle,
@@ -37,12 +37,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
 import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
-import MultiSelectWithCheckbox from '@/components/shared/MultiSelectWithCheckbox';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
-import { OwnerOrHigher, SuperAdminOnly } from '@/components/permission-guard';
-
+import { OwnerOnly } from '@/components/permission-guard';
 const Page = () => {
   const { data: session, status }: any = useSession();
   const router = useRouter();
@@ -57,15 +55,15 @@ const Page = () => {
     <>
       {session && (
         <Suspense>
-          <SuperAdminOnly
+          <OwnerOnly
             fallback={
               <div className='p-8 text-center'>
-                Access Denied. Only super admins can access this page.
+                Access Denied. Only Owners can access this page.
               </div>
             }
           >
-            <SubscriptionListing session={session} />
-          </SuperAdminOnly>
+            <MemberListing session={session} />
+          </OwnerOnly>
         </Suspense>
       )}
     </>
@@ -74,12 +72,16 @@ const Page = () => {
 
 export default Page;
 
-interface StagesTabProps {
+interface MemberListingProps {
   session: any;
 }
-const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
+
+const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
   const dispatch = useDispatch();
-  const { data, loading } = useSelector((state) => state.subscriptions);
+  const { data, loading } = useSelector((state) => state.members);
+  // Get the selected gym ID from session or use the first available gym
+  const selectedGymId = session?.user?.selected_location_id || '';
+
   const [alertState, setAlertState] = useState({
     open: false,
     title: '',
@@ -92,77 +94,98 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
   });
 
   const validationSchema = yup.object({
-    name: yup.string().required('Name is required'),
-    monthly_price: yup.number().required('Monthly price is required'),
-    yearly_price: yup.number().required('Yearly price is required'),
-    max_gyms: yup.number().required('Max gyms is required'),
-    max_members: yup.number().required('Max members is required'),
-    max_equipment: yup.number().required('Max equipment is required')
+    first_name: yup.string().required('First name is required'),
+    last_name: yup.string().required('Last name is required'),
+    email: yup.string().email('Invalid email').required('Email is required'),
+    phone_number: yup.string().required('Phone is required'),
+    address: yup.string().required('Address is required'),
+    city: yup.string().required('City is required'),
+    state: yup.string().required('State is required'),
+    zip_code: yup.string().required('Zip is required'),
+    country: yup.string().required('Country is required'),
+    password: yup.string().required('Password is required'),
+    date_of_birth: yup
+      .date()
+      .required('Date of birth is required')
+      .max(new Date(), 'Date of birth must be in the past')
   });
 
   const formik = useFormik({
     initialValues: {
-      name: '',
-      monthly_price: 0,
-      yearly_price: 0,
-      max_gyms: 0,
-      max_members: 0,
-      max_equipment: 0,
+      id: '',
+      user_id: '',
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone_number: '',
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      country: '',
       action: 'create',
       open: false,
-      SubscriptionFeature: []
+      password: '',
+      date_of_birth: '',
+      gym_id: session?.user?.selected_location_id
     },
     validationSchema: validationSchema,
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
+        if (!session?.user?.selected_location_id) {
+          toast.error('Please select a gym first');
+          return;
+        }
+
         if (values.action === 'create') {
           const result = await dispatch(
-            addSubscription({
-              subscription: {
-                ...values
-              } as any
+            addMember({
+              ...values,
+              gym_id: selectedGymId
             })
           );
-          if (addSubscription.fulfilled.match(result)) {
-            toast.success('Subscription added successfully!');
+          if (addMember.fulfilled.match(result)) {
+            toast.success('Member added successfully!');
             formik.resetForm();
             formik.setValues({
-              ...formik.values,
+              ...formik.initialValues,
               open: false
             });
-          } else if (addSubscription.rejected.match(result)) {
+            // Refresh the members list
+            dispatch(fetchMembers(selectedGymId));
+          } else if (addMember.rejected.match(result)) {
             const errorMessage =
               result.payload &&
               typeof result.payload === 'object' &&
               'message' in result.payload
                 ? (result.payload as { message: string }).message
-                : 'Failed to add subscription';
+                : 'Failed to add member';
             toast.error(errorMessage);
           }
         } else {
           const result = await dispatch(
-            updateSubscription({
-              subscription: {
-                ...values
-              } as any
+            updateMember({
+              ...values
             })
           );
-          if (updateSubscription.fulfilled.match(result)) {
-            toast.success('Subscription updated successfully!');
+          if (updateMember.fulfilled.match(result)) {
+            toast.success('Member updated successfully!');
             formik.resetForm();
             formik.setValues({
-              ...formik.values,
+              ...formik.initialValues,
               open: false
             });
-          } else if (updateSubscription.rejected.match(result)) {
+            // Refresh the members list
+            dispatch(fetchMembers(selectedGymId));
+          } else if (updateMember.rejected.match(result)) {
             const errorMessage =
               result.payload &&
               typeof result.payload === 'object' &&
               'message' in result.payload
                 ? (result.payload as { message: string }).message
-                : 'Failed to update subscription';
+                : 'Failed to update member';
             toast.error(errorMessage);
           }
         }
@@ -174,26 +197,33 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchSubscriptions()),
-          dispatch(fetchFeatures())
-        ]);
-      } catch (error) {
-        toast.error('Failed to fetch data');
-        console.error('Data fetching error:', error);
-      }
-    };
+    if (selectedGymId) {
+      dispatch(fetchMembers(selectedGymId));
+    }
+  }, [dispatch, selectedGymId]);
 
-    fetchData();
-  }, [dispatch]);
+  // Update gym_id when selectedGymId changes
+  useEffect(() => {
+    formik.setFieldValue('gym_id', selectedGymId);
+  }, [selectedGymId]);
+
+  if (!selectedGymId) {
+    return (
+      <PageContainer>
+        <div className='p-8 text-center'>
+          <p className='text-muted-foreground text-lg'>
+            Please select a gym from the sidebar to view and manage members.
+          </p>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
-          <h3 className='text-lg font-semibold'>Subscriptions</h3>
+          <h3 className='text-lg font-semibold'>Members</h3>
           <Button
             onClick={() => {
               formik.setValues({
@@ -204,7 +234,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
             }}
           >
             <IconPlus className='mr-2 h-4 w-4' />
-            New Subscription
+            New Member
           </Button>
         </div>
         <Card>
@@ -220,38 +250,41 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Monthly Price</TableHead>
-                      <TableHead>Yearly Price</TableHead>
-                      <TableHead>Max Gyms</TableHead>
-                      <TableHead>Max Members</TableHead>
-                      <TableHead>Max Equipment</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Joined Date</TableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.subscriptions.map((row: Subscription) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.name}</TableCell>
+                    {data.members.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>
+                          {member.user.first_name} {member.user.last_name}
+                        </TableCell>
                         <TableCell className=''>
                           <div className='flex flex-col gap-2'>
                             <Badge
-                              variant={row.is_active ? 'default' : 'outline'}
+                              variant={
+                                member.user.is_active ? 'default' : 'outline'
+                              }
                               className={
-                                row.is_active
+                                member.user.is_active
                                   ? 'bg-primary/10 text-primary'
                                   : 'text-destructive'
                               }
                             >
-                              {row.is_active ? 'Active' : 'Inactive'}
+                              {member.user.is_active ? 'Active' : 'Inactive'}
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className=''>{row.monthly_price}</TableCell>
-                        <TableCell className=''>{row.yearly_price}</TableCell>
-                        <TableCell className=''>{row.max_gyms}</TableCell>
-                        <TableCell className=''>{row.max_members}</TableCell>
-                        <TableCell className=''>{row.max_equipment}</TableCell>
-                        <TableCell></TableCell>
+                        <TableCell className=''>{member.user.email}</TableCell>
+                        <TableCell className=''>
+                          +{member.user.phone_number}
+                        </TableCell>
+                        <TableCell className=''>
+                          {new Date(member.joinedAt).toLocaleDateString()}
+                        </TableCell>
                         <TableCell className=''>
                           <div className='flex justify-end gap-2'>
                             <CustomTooltip
@@ -262,10 +295,25 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     formik.setValues({
                                       ...formik.values,
-                                      ...row,
-                                      action: 'view',
+                                      id: member.id,
+                                      user_id: member.user_id,
+                                      first_name: member.user.first_name,
+                                      last_name: member.user.last_name,
+                                      email: member.user.email,
+                                      phone_number: member.user.phone_number,
+                                      address: member.user.address,
+                                      city: member.user.city,
+                                      state: member.user.state,
+                                      zip_code: member.user.zip_code,
+                                      country: member.user.country,
+                                      date_of_birth: member.user.date_of_birth
+                                        ? new Date(member.user.date_of_birth)
+                                            .toISOString()
+                                            .split('T')[0]
+                                        : '',
+                                      action: 'update',
                                       open: true
-                                    } as any)
+                                    })
                                   }
                                 >
                                   <IconEdit />
@@ -282,34 +330,38 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     setAlertState({
                                       open: true,
-                                      title: row.is_active
+                                      title: member.user.is_active
                                         ? 'Deactivate'
                                         : 'Activate',
-                                      description: row.is_active
-                                        ? 'Are you sure you want to deactivate this subscription?'
-                                        : 'Are you sure you want to activate this subscription?',
+                                      description: member.user.is_active
+                                        ? 'Are you sure you want to deactivate this member?'
+                                        : 'Are you sure you want to activate this member?',
                                       cancelText: 'Cancel',
-                                      confirmText: row.is_active
+                                      confirmText: member.user.is_active
                                         ? 'Deactivate'
                                         : 'Activate',
                                       onConfirm: async () => {
                                         try {
                                           const result = await dispatch(
-                                            toggleSubscriptionStatus({
-                                              id: row.id,
-                                              status: !row.is_active
+                                            toggleMemberStatus({
+                                              id: member.id,
+                                              status: !member.user.is_active
                                             })
                                           );
                                           if (
-                                            toggleSubscriptionStatus.fulfilled.match(
+                                            toggleMemberStatus.fulfilled.match(
                                               result
                                             )
                                           ) {
                                             toast.success(
-                                              `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              `Member ${!member.user.is_active ? 'activated' : 'deactivated'} successfully!`
+                                            );
+                                            // Refresh the members list
+                                            dispatch(
+                                              fetchMembers(selectedGymId)
                                             );
                                           } else if (
-                                            toggleSubscriptionStatus.rejected.match(
+                                            toggleMemberStatus.rejected.match(
                                               result
                                             )
                                           ) {
@@ -323,7 +375,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                                       message: string;
                                                     }
                                                   ).message
-                                                : 'Failed to update subscription status';
+                                                : 'Failed to update member status';
                                             toast.error(errorMessage);
                                           }
                                         } catch (error) {
@@ -348,7 +400,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                 >
                                   <IconPower
                                     className={
-                                      row.is_active
+                                      member.user.is_active
                                         ? 'text-primary'
                                         : 'text-destructive'
                                     }
@@ -356,7 +408,9 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                 </Button>
                               }
                               content={
-                                row.is_active ? 'Deactivate' : 'Activate'
+                                member.user.is_active
+                                  ? 'Deactivate'
+                                  : 'Activate'
                               }
                             />
                             <CustomTooltip
@@ -367,30 +421,28 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     setAlertState({
                                       open: true,
-                                      title: 'Delete Subscription',
+                                      title: 'Delete Member',
                                       description:
-                                        'Are you sure you want to delete this subscription?',
+                                        'Are you sure you want to delete this member? This action cannot be undone.',
                                       cancelText: 'Cancel',
                                       confirmText: 'Delete',
                                       onConfirm: async () => {
                                         try {
                                           const result = await dispatch(
-                                            deleteSubscription({
-                                              id: row.id
-                                            })
+                                            deleteMember(member.id)
                                           );
                                           if (
-                                            deleteSubscription.fulfilled.match(
-                                              result
-                                            )
+                                            deleteMember.fulfilled.match(result)
                                           ) {
                                             toast.success(
-                                              'Subscription deleted successfully!'
+                                              'Member deleted successfully!'
+                                            );
+                                            // Refresh the members list
+                                            dispatch(
+                                              fetchMembers(selectedGymId)
                                             );
                                           } else if (
-                                            deleteSubscription.rejected.match(
-                                              result
-                                            )
+                                            deleteMember.rejected.match(result)
                                           ) {
                                             const errorMessage =
                                               result.payload &&
@@ -402,7 +454,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                                       message: string;
                                                     }
                                                   ).message
-                                                : 'Failed to delete subscription';
+                                                : 'Failed to delete member';
                                             toast.error(errorMessage);
                                           }
                                         } catch (error) {
@@ -410,7 +462,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                             'An unexpected error occurred'
                                           );
                                           console.error(
-                                            'Delete subscription error:',
+                                            'Delete member error:',
                                             error
                                           );
                                         }
@@ -450,123 +502,218 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
           }}
         >
           <form onSubmit={formik.handleSubmit} className='space-y-4'>
-            <DialogContent className='sm:max-w-md'>
+            <DialogContent className='sm:max-w-xl'>
               <DialogHeader>
                 <DialogTitle>
                   {formik.values.action === 'create'
-                    ? 'Add Subscription'
-                    : 'Update Subscription'}
+                    ? 'Add Member'
+                    : 'Update Member'}
                 </DialogTitle>
               </DialogHeader>
               <div className='space-y-2'>
-                <Label htmlFor='name'>Name</Label>
+                <Label htmlFor='first_name'>First Name</Label>
                 <Input
-                  id='name'
-                  name='name'
-                  placeholder='Name'
-                  value={formik.values.name}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(formik.touched.name && formik.errors.name)}
-                  helperText={formik.errors.name as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='monthly_price'>Monthly Price</Label>
-                <Input
-                  id='monthly_price'
-                  type='number'
-                  name='monthly_price'
-                  placeholder='Monthly Price'
-                  value={formik.values.monthly_price}
+                  id='first_name'
+                  name='first_name'
+                  placeholder='First Name'
+                  value={formik.values.first_name}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={Boolean(
-                    formik.touched.monthly_price && formik.errors.monthly_price
+                    formik.touched.first_name && formik.errors.first_name
                   )}
-                  helperText={formik.errors.monthly_price as string}
+                  helperText={formik.errors.first_name as string}
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='yearly_price'>Yearly Price</Label>
+                <Label htmlFor='last_name'>Last Name</Label>
                 <Input
-                  type='number'
-                  id='yearly_price'
-                  name='yearly_price'
-                  placeholder='Yearly Price'
-                  value={formik.values.yearly_price}
+                  id='last_name'
+                  name='last_name'
+                  placeholder='Last Name'
+                  value={formik.values.last_name}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={Boolean(
-                    formik.touched.yearly_price && formik.errors.yearly_price
+                    formik.touched.last_name && formik.errors.last_name
                   )}
-                  helperText={formik.errors.yearly_price as string}
+                  helperText={formik.errors.last_name as string}
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='max_gyms'>Max Gyms</Label>
+                <Label htmlFor='date_of_birth'>Date of Birth</Label>
                 <Input
-                  type='number'
-                  id='max_gyms'
-                  name='max_gyms'
-                  placeholder='Max Gyms'
-                  value={formik.values.max_gyms}
+                  type='date'
+                  id='date_of_birth'
+                  name='date_of_birth'
+                  placeholder='Date of Birth'
+                  value={formik.values.date_of_birth}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
                   error={Boolean(
-                    formik.touched.max_gyms && formik.errors.max_gyms
+                    formik.touched.date_of_birth && formik.errors.date_of_birth
                   )}
-                  helperText={formik.errors.max_gyms as string}
+                  helperText={formik.errors.date_of_birth as string}
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='max_members'>Max Members</Label>
+                <Label htmlFor='email'>Email</Label>
                 <Input
-                  type='number'
-                  id='max_members'
-                  name='max_members'
-                  placeholder='Max Members'
-                  value={formik.values.max_members}
+                  type='email'
+                  id='email'
+                  name='email'
+                  placeholder='Email'
+                  value={formik.values.email}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.max_members && formik.errors.max_members
-                  )}
-                  helperText={formik.errors.max_members as string}
+                  error={Boolean(formik.touched.email && formik.errors.email)}
+                  helperText={formik.errors.email as string}
                 />
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='max_equipment'>Max Equipment</Label>
-                <Input
-                  type='number'
-                  id='max_equipment'
-                  name='max_equipment'
-                  placeholder='Max Equipment'
-                  value={formik.values.max_equipment}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.max_equipment && formik.errors.max_equipment
-                  )}
-                  helperText={formik.errors.max_equipment as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='description'>Features</Label>
-                <MultiSelectWithCheckbox
-                  items={data.features.map((feature: Feature) => ({
-                    label: feature.name,
-                    value: feature.id
-                  }))}
-                  selectedValues={formik.values.SubscriptionFeature}
-                  onSelectionChange={(ids: string[]) => {
-                    formik.setValues({
-                      ...formik.values,
-                      SubscriptionFeature: ids as any
-                    });
+              {formik.values.action === 'create' && (
+                <div className='space-y-2'>
+                  <Label htmlFor='password'>Password</Label>
+                  <Input
+                    type='password'
+                    id='password'
+                    name='password'
+                    placeholder='Password'
+                    value={formik.values.password}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    error={Boolean(
+                      formik.touched.password && formik.errors.password
+                    )}
+                    helperText={formik.errors.password as string}
+                  />
+                </div>
+              )}
+              <div>
+                <PhoneInput
+                  country='pk'
+                  inputStyle={{
+                    ...(formik.touched.phone_number &&
+                      formik.errors.phone_number && {
+                        borderColor: 'red'
+                      }),
+                    width: '100%'
+                  }}
+                  buttonStyle={{
+                    ...(formik.touched.phone_number &&
+                      formik.errors.phone_number && {
+                        borderColor: 'red'
+                      })
+                  }}
+                  placeholder='Phone Number'
+                  value={formik.values.phone_number}
+                  onChange={(value) => {
+                    formik.setFieldValue('phone_number', value);
+                  }}
+                  onBlur={() => {
+                    formik.setFieldTouched('phone_number', true);
                   }}
                 />
+                {formik.errors.phone_number && formik.touched.phone_number && (
+                  <p className='text-destructive mt-1 text-sm'>
+                    {formik.errors.phone_number as string}
+                  </p>
+                )}
               </div>
+              <div className='space-y-2'>
+                <Label htmlFor='address'>Address</Label>
+                <Input
+                  id='address'
+                  name='address'
+                  placeholder='Address'
+                  value={formik.values.address}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(
+                    formik.touched.address && formik.errors.address
+                  )}
+                  helperText={formik.errors.address as string}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='city'>City</Label>
+                <Input
+                  id='city'
+                  name='city'
+                  placeholder='City'
+                  value={formik.values.city}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(formik.touched.city && formik.errors.city)}
+                  helperText={formik.errors.city as string}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='state'>State</Label>
+                <Input
+                  id='state'
+                  name='state'
+                  placeholder='State'
+                  value={formik.values.state}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(formik.touched.state && formik.errors.state)}
+                  helperText={formik.errors.state as string}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='zip_code'>Zip</Label>
+                <Input
+                  id='zip_code'
+                  name='zip_code'
+                  placeholder='Zip Code'
+                  value={formik.values.zip_code}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(
+                    formik.touched.zip_code && formik.errors.zip_code
+                  )}
+                  helperText={formik.errors.zip_code as string}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='country'>Country</Label>
+                <Input
+                  id='country'
+                  name='country'
+                  placeholder='Country'
+                  value={formik.values.country}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  error={Boolean(
+                    formik.touched.country && formik.errors.country
+                  )}
+                  helperText={formik.errors.country as string}
+                />
+              </div>
+              {/* <div className='space-y-2'>
+                <Label htmlFor='cnic'>CNIC</Label>
+                <SingleFileUploader
+                  disabled={false}
+                  file={formik.values.cnic as any}
+                  setFile={(file) => formik.setFieldValue('cnic', file)}
+                >
+                  <Avatar className='h-24 w-24'>
+                    <AvatarImage
+                      src={
+                        formik.values.cnic
+                          ? formik.values.cnic?.startsWith('data:')
+                            ? formik.values.cnic
+                            : `${process.env.NEXT_PUBLIC_DIR}images/clients/${formik.values.cnic}`
+                          : ''
+                      }
+                    />
+                    <AvatarFallback>
+                      {formik.values.first_name?.charAt(0) +
+                        formik.values.last_name?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                </SingleFileUploader>
+              </div> */}
               <DialogFooter>
                 <Button
                   type='button'
@@ -577,13 +724,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                 >
                   Cancel
                 </Button>
-                <Button
-                  type='submit'
-                  disabled={loading || formik.isSubmitting}
-                  onClick={() => {
-                    formik.handleSubmit();
-                  }}
-                >
+                <Button type='submit' disabled={loading || formik.isSubmitting}>
                   {formik.isSubmitting ? (
                     <div className='flex items-center gap-2'>
                       <Loader isLoading={true} size={16} />
@@ -592,9 +733,9 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                         : 'Updating...'}
                     </div>
                   ) : formik.values.action === 'create' ? (
-                    'Add Subscription'
+                    'Add Member'
                   ) : (
-                    'Update Subscription'
+                    'Update Member'
                   )}
                 </Button>
               </DialogFooter>

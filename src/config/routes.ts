@@ -20,24 +20,9 @@ export const SUPERADMIN_ROUTES: RouteConfig[] = [
     description: 'Manage subscription plans and features'
   },
   {
-    path: '/dashboard/product',
-    roles: ['SUPERADMIN'],
-    description: 'Manage product catalog and inventory'
-  },
-  {
     path: '/dashboard/clients',
     roles: ['SUPERADMIN'],
     description: 'System administration panel'
-  },
-  {
-    path: '/system-settings',
-    roles: ['SUPERADMIN'],
-    description: 'Global system configuration'
-  },
-  {
-    path: '/user-management',
-    roles: ['SUPERADMIN'],
-    description: 'Manage all users and roles'
   },
   {
     path: '/api/admin',
@@ -52,6 +37,16 @@ export const OWNER_ROUTES: RouteConfig[] = [
     path: '/dashboard/locations',
     roles: ['OWNER'],
     description: 'Manage locations'
+  },
+  {
+    path: '/dashboard/members',
+    roles: ['OWNER'],
+    description: 'Manage members'
+  },
+  {
+    path: '/dashboard/equipments',
+    roles: ['OWNER'],
+    description: 'Manage equipments'
   }
 ];
 
@@ -79,6 +74,16 @@ export const AUTHENTICATED_ROUTES: RouteConfig[] = [
     path: '/dashboard/locations',
     roles: ['OWNER'],
     description: 'Manage locations'
+  },
+  {
+    path: '/dashboard/members',
+    roles: ['OWNER'],
+    description: 'Manage members'
+  },
+  {
+    path: '/dashboard/equipments',
+    roles: ['OWNER'],
+    description: 'Manage equipments'
   }
 ];
 

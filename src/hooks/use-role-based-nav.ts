@@ -1,7 +1,6 @@
 import { useSession } from 'next-auth/react';
 import { useRoleCheck, getFilteredNavItems } from '@/lib/authUtils';
 import { navItems } from '@/constants/data';
-import { NavItem } from '@/types';
 
 export function useRoleBasedNavigation() {
   const { data: session } = useSession();

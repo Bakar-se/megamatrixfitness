@@ -3,20 +3,19 @@ import { useSession } from 'next-auth/react';
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from '@/store/Store';
-import { Feature, Subscription } from '@/types/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AlertModal } from '@/components/shared/AlertModal';
 import * as yup from 'yup';
 import { useFormik } from 'formik';
 import {
-  addSubscription,
-  fetchSubscriptions,
-  fetchFeatures,
-  toggleSubscriptionStatus,
-  updateSubscription,
-  deleteSubscription
-} from '@/store/SubscriptionSlice';
+  addEquipment,
+  fetchEquipment,
+  toggleEquipmentStatus,
+  updateEquipment,
+  deleteEquipment,
+  EquipmentType
+} from '@/store/EquipmentSlice';
 import {
   Dialog,
   DialogTitle,
@@ -37,11 +36,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
 import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
-import MultiSelectWithCheckbox from '@/components/shared/MultiSelectWithCheckbox';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
-import { OwnerOrHigher, SuperAdminOnly } from '@/components/permission-guard';
+import { OwnerOnly } from '@/components/permission-guard';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 const Page = () => {
   const { data: session, status }: any = useSession();
@@ -57,15 +62,15 @@ const Page = () => {
     <>
       {session && (
         <Suspense>
-          <SuperAdminOnly
+          <OwnerOnly
             fallback={
               <div className='p-8 text-center'>
-                Access Denied. Only super admins can access this page.
+                Access Denied. Only Owners can access this page.
               </div>
             }
           >
-            <SubscriptionListing session={session} />
-          </SuperAdminOnly>
+            <EquipmentListing session={session} />
+          </OwnerOnly>
         </Suspense>
       )}
     </>
@@ -74,12 +79,16 @@ const Page = () => {
 
 export default Page;
 
-interface StagesTabProps {
+interface EquipmentListingProps {
   session: any;
 }
-const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
+
+const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
   const dispatch = useDispatch();
-  const { data, loading } = useSelector((state) => state.subscriptions);
+  const { data, loading } = useSelector((state) => state.equipment);
+  // Get the selected gym ID from session or use the first available gym
+  const selectedGymId = session?.user?.selected_location_id || '';
+
   const [alertState, setAlertState] = useState({
     open: false,
     title: '',
@@ -92,108 +101,130 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
   });
 
   const validationSchema = yup.object({
-    name: yup.string().required('Name is required'),
-    monthly_price: yup.number().required('Monthly price is required'),
-    yearly_price: yup.number().required('Yearly price is required'),
-    max_gyms: yup.number().required('Max gyms is required'),
-    max_members: yup.number().required('Max members is required'),
-    max_equipment: yup.number().required('Max equipment is required')
+    name: yup.string().required('Equipment name is required'),
+    type: yup.string().required('Equipment type is required'),
+    quantity: yup.string().required('Quantity is required'),
+    weight: yup.string().optional()
   });
 
   const formik = useFormik({
     initialValues: {
+      id: '',
       name: '',
-      monthly_price: 0,
-      yearly_price: 0,
-      max_gyms: 0,
-      max_members: 0,
-      max_equipment: 0,
+      type: '' as EquipmentType,
+      quantity: '',
+      weight: '',
       action: 'create',
       open: false,
-      SubscriptionFeature: []
+      gym_id: selectedGymId
     },
     validationSchema: validationSchema,
-    validateOnChange: false,
+    validateOnChange: true,
     validateOnBlur: true,
     onSubmit: async (values) => {
       try {
+        // Manual validation check
+        const errors = await formik.validateForm();
+        if (Object.keys(errors).length > 0) {
+          toast.error('Please fix the form errors before submitting');
+          return;
+        }
+
+        if (!selectedGymId) {
+          toast.error('Please select a gym first');
+          return;
+        }
+
         if (values.action === 'create') {
           const result = await dispatch(
-            addSubscription({
-              subscription: {
-                ...values
-              } as any
+            addEquipment({
+              ...values,
+              gym_id: selectedGymId
             })
           );
-          if (addSubscription.fulfilled.match(result)) {
-            toast.success('Subscription added successfully!');
+          if (addEquipment.fulfilled.match(result)) {
+            toast.success('Equipment added successfully!');
             formik.resetForm();
             formik.setValues({
-              ...formik.values,
+              ...formik.initialValues,
               open: false
             });
-          } else if (addSubscription.rejected.match(result)) {
+            // Refresh the equipment list
+            dispatch(fetchEquipment(selectedGymId));
+          } else if (addEquipment.rejected.match(result)) {
             const errorMessage =
               result.payload &&
               typeof result.payload === 'object' &&
               'message' in result.payload
                 ? (result.payload as { message: string }).message
-                : 'Failed to add subscription';
+                : 'Failed to add equipment';
             toast.error(errorMessage);
           }
         } else {
           const result = await dispatch(
-            updateSubscription({
-              subscription: {
-                ...values
-              } as any
+            updateEquipment({
+              ...values
             })
           );
-          if (updateSubscription.fulfilled.match(result)) {
-            toast.success('Subscription updated successfully!');
+          if (updateEquipment.fulfilled.match(result)) {
+            toast.success('Equipment updated successfully!');
             formik.resetForm();
             formik.setValues({
-              ...formik.values,
+              ...formik.initialValues,
               open: false
             });
-          } else if (updateSubscription.rejected.match(result)) {
+            // Refresh the equipment list
+            dispatch(fetchEquipment(selectedGymId));
+          } else if (updateEquipment.rejected.match(result)) {
             const errorMessage =
               result.payload &&
               typeof result.payload === 'object' &&
               'message' in result.payload
                 ? (result.payload as { message: string }).message
-                : 'Failed to update subscription';
+                : 'Failed to update equipment';
             toast.error(errorMessage);
           }
         }
       } catch (error) {
         toast.error('An unexpected error occurred');
-        console.error('Form submission error:', error);
       }
     }
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchSubscriptions()),
-          dispatch(fetchFeatures())
-        ]);
-      } catch (error) {
-        toast.error('Failed to fetch data');
-        console.error('Data fetching error:', error);
-      }
-    };
+    if (selectedGymId) {
+      dispatch(fetchEquipment(selectedGymId));
+    }
+  }, [dispatch, selectedGymId]);
 
-    fetchData();
-  }, [dispatch]);
+  // Update gym_id when selectedGymId changes
+  useEffect(() => {
+    formik.setFieldValue('gym_id', selectedGymId);
+  }, [selectedGymId]);
+
+  if (!selectedGymId) {
+    return (
+      <PageContainer>
+        <div className='p-8 text-center'>
+          <p className='text-muted-foreground text-lg'>
+            Please select a gym from the sidebar to view and manage equipment.
+          </p>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  // Equipment type options for the select dropdown
+  const equipmentTypeOptions = Object.values(EquipmentType).map((type) => ({
+    value: type,
+    label: type.charAt(0) + type.slice(1).toLowerCase()
+  }));
 
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
-          <h3 className='text-lg font-semibold'>Subscriptions</h3>
+          <h3 className='text-lg font-semibold'>Equipment</h3>
           <Button
             onClick={() => {
               formik.setValues({
@@ -204,7 +235,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
             }}
           >
             <IconPlus className='mr-2 h-4 w-4' />
-            New Subscription
+            New Equipment
           </Button>
         </div>
         <Card>
@@ -219,39 +250,40 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Quantity</TableHead>
+                      <TableHead>Weight</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Monthly Price</TableHead>
-                      <TableHead>Yearly Price</TableHead>
-                      <TableHead>Max Gyms</TableHead>
-                      <TableHead>Max Members</TableHead>
-                      <TableHead>Max Equipment</TableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.subscriptions.map((row: Subscription) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell className=''>
-                          <div className='flex flex-col gap-2'>
-                            <Badge
-                              variant={row.is_active ? 'default' : 'outline'}
-                              className={
-                                row.is_active
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'text-destructive'
-                              }
-                            >
-                              {row.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
+                    {data.equipment.map((equipment) => (
+                      <TableRow key={equipment.id}>
+                        <TableCell className='font-medium'>
+                          {equipment.name}
                         </TableCell>
-                        <TableCell className=''>{row.monthly_price}</TableCell>
-                        <TableCell className=''>{row.yearly_price}</TableCell>
-                        <TableCell className=''>{row.max_gyms}</TableCell>
-                        <TableCell className=''>{row.max_members}</TableCell>
-                        <TableCell className=''>{row.max_equipment}</TableCell>
-                        <TableCell></TableCell>
+                        <TableCell>
+                          <Badge variant='outline' className='capitalize'>
+                            {equipment.type.toLowerCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{equipment.quantity}</TableCell>
+                        <TableCell>{equipment.weight || '-'}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              equipment.is_active ? 'default' : 'outline'
+                            }
+                            className={
+                              equipment.is_active
+                                ? 'bg-primary/10 text-primary'
+                                : 'text-destructive'
+                            }
+                          >
+                            {equipment.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
                         <TableCell className=''>
                           <div className='flex justify-end gap-2'>
                             <CustomTooltip
@@ -262,10 +294,14 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     formik.setValues({
                                       ...formik.values,
-                                      ...row,
-                                      action: 'view',
+                                      id: equipment.id,
+                                      name: equipment.name,
+                                      type: equipment.type,
+                                      quantity: equipment.quantity,
+                                      weight: equipment.weight || '',
+                                      action: 'update',
                                       open: true
-                                    } as any)
+                                    })
                                   }
                                 >
                                   <IconEdit />
@@ -282,34 +318,38 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     setAlertState({
                                       open: true,
-                                      title: row.is_active
+                                      title: equipment.is_active
                                         ? 'Deactivate'
                                         : 'Activate',
-                                      description: row.is_active
-                                        ? 'Are you sure you want to deactivate this subscription?'
-                                        : 'Are you sure you want to activate this subscription?',
+                                      description: equipment.is_active
+                                        ? 'Are you sure you want to deactivate this equipment?'
+                                        : 'Are you sure you want to activate this equipment?',
                                       cancelText: 'Cancel',
-                                      confirmText: row.is_active
+                                      confirmText: equipment.is_active
                                         ? 'Deactivate'
                                         : 'Activate',
                                       onConfirm: async () => {
                                         try {
                                           const result = await dispatch(
-                                            toggleSubscriptionStatus({
-                                              id: row.id,
-                                              status: !row.is_active
+                                            toggleEquipmentStatus({
+                                              id: equipment.id,
+                                              status: !equipment.is_active
                                             })
                                           );
                                           if (
-                                            toggleSubscriptionStatus.fulfilled.match(
+                                            toggleEquipmentStatus.fulfilled.match(
                                               result
                                             )
                                           ) {
                                             toast.success(
-                                              `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              `Equipment ${!equipment.is_active ? 'activated' : 'deactivated'} successfully!`
+                                            );
+                                            // Refresh the equipment list
+                                            dispatch(
+                                              fetchEquipment(selectedGymId)
                                             );
                                           } else if (
-                                            toggleSubscriptionStatus.rejected.match(
+                                            toggleEquipmentStatus.rejected.match(
                                               result
                                             )
                                           ) {
@@ -323,7 +363,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                                       message: string;
                                                     }
                                                   ).message
-                                                : 'Failed to update subscription status';
+                                                : 'Failed to update equipment status';
                                             toast.error(errorMessage);
                                           }
                                         } catch (error) {
@@ -348,7 +388,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                 >
                                   <IconPower
                                     className={
-                                      row.is_active
+                                      equipment.is_active
                                         ? 'text-primary'
                                         : 'text-destructive'
                                     }
@@ -356,7 +396,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                 </Button>
                               }
                               content={
-                                row.is_active ? 'Deactivate' : 'Activate'
+                                equipment.is_active ? 'Deactivate' : 'Activate'
                               }
                             />
                             <CustomTooltip
@@ -367,28 +407,30 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                   onClick={() =>
                                     setAlertState({
                                       open: true,
-                                      title: 'Delete Subscription',
+                                      title: 'Delete Equipment',
                                       description:
-                                        'Are you sure you want to delete this subscription?',
+                                        'Are you sure you want to delete this equipment? This action cannot be undone.',
                                       cancelText: 'Cancel',
                                       confirmText: 'Delete',
                                       onConfirm: async () => {
                                         try {
                                           const result = await dispatch(
-                                            deleteSubscription({
-                                              id: row.id
-                                            })
+                                            deleteEquipment(equipment.id)
                                           );
                                           if (
-                                            deleteSubscription.fulfilled.match(
+                                            deleteEquipment.fulfilled.match(
                                               result
                                             )
                                           ) {
                                             toast.success(
-                                              'Subscription deleted successfully!'
+                                              'Equipment deleted successfully!'
+                                            );
+                                            // Refresh the equipment list
+                                            dispatch(
+                                              fetchEquipment(selectedGymId)
                                             );
                                           } else if (
-                                            deleteSubscription.rejected.match(
+                                            deleteEquipment.rejected.match(
                                               result
                                             )
                                           ) {
@@ -402,7 +444,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                                       message: string;
                                                     }
                                                   ).message
-                                                : 'Failed to delete subscription';
+                                                : 'Failed to delete equipment';
                                             toast.error(errorMessage);
                                           }
                                         } catch (error) {
@@ -410,7 +452,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                             'An unexpected error occurred'
                                           );
                                           console.error(
-                                            'Delete subscription error:',
+                                            'Delete equipment error:',
                                             error
                                           );
                                         }
@@ -449,124 +491,113 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
             formik.resetForm();
           }}
         >
-          <form onSubmit={formik.handleSubmit} className='space-y-4'>
-            <DialogContent className='sm:max-w-md'>
+          <form
+            onSubmit={(e) => {
+              formik.handleSubmit(e);
+            }}
+            className='space-y-4'
+          >
+            <DialogContent className='sm:max-w-xl'>
               <DialogHeader>
                 <DialogTitle>
                   {formik.values.action === 'create'
-                    ? 'Add Subscription'
-                    : 'Update Subscription'}
+                    ? 'Add Equipment'
+                    : 'Update Equipment'}
                 </DialogTitle>
               </DialogHeader>
+
               <div className='space-y-2'>
-                <Label htmlFor='name'>Name</Label>
+                <Label htmlFor='name'>Equipment Name</Label>
                 <Input
                   id='name'
                   name='name'
-                  placeholder='Name'
+                  placeholder='e.g., Treadmill, 50kg Plates, Olympic Bar'
                   value={formik.values.name}
                   onChange={formik.handleChange}
                   onBlur={formik.handleBlur}
-                  error={Boolean(formik.touched.name && formik.errors.name)}
-                  helperText={formik.errors.name as string}
+                  className={
+                    formik.touched.name && formik.errors.name
+                      ? 'border-destructive'
+                      : ''
+                  }
                 />
+                {formik.touched.name && formik.errors.name && (
+                  <p className='text-destructive text-sm'>
+                    {formik.errors.name}
+                  </p>
+                )}
               </div>
+
               <div className='space-y-2'>
-                <Label htmlFor='monthly_price'>Monthly Price</Label>
-                <Input
-                  id='monthly_price'
-                  type='number'
-                  name='monthly_price'
-                  placeholder='Monthly Price'
-                  value={formik.values.monthly_price}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.monthly_price && formik.errors.monthly_price
-                  )}
-                  helperText={formik.errors.monthly_price as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='yearly_price'>Yearly Price</Label>
-                <Input
-                  type='number'
-                  id='yearly_price'
-                  name='yearly_price'
-                  placeholder='Yearly Price'
-                  value={formik.values.yearly_price}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.yearly_price && formik.errors.yearly_price
-                  )}
-                  helperText={formik.errors.yearly_price as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='max_gyms'>Max Gyms</Label>
-                <Input
-                  type='number'
-                  id='max_gyms'
-                  name='max_gyms'
-                  placeholder='Max Gyms'
-                  value={formik.values.max_gyms}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.max_gyms && formik.errors.max_gyms
-                  )}
-                  helperText={formik.errors.max_gyms as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='max_members'>Max Members</Label>
-                <Input
-                  type='number'
-                  id='max_members'
-                  name='max_members'
-                  placeholder='Max Members'
-                  value={formik.values.max_members}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.max_members && formik.errors.max_members
-                  )}
-                  helperText={formik.errors.max_members as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='max_equipment'>Max Equipment</Label>
-                <Input
-                  type='number'
-                  id='max_equipment'
-                  name='max_equipment'
-                  placeholder='Max Equipment'
-                  value={formik.values.max_equipment}
-                  onChange={formik.handleChange}
-                  onBlur={formik.handleBlur}
-                  error={Boolean(
-                    formik.touched.max_equipment && formik.errors.max_equipment
-                  )}
-                  helperText={formik.errors.max_equipment as string}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='description'>Features</Label>
-                <MultiSelectWithCheckbox
-                  items={data.features.map((feature: Feature) => ({
-                    label: feature.name,
-                    value: feature.id
-                  }))}
-                  selectedValues={formik.values.SubscriptionFeature}
-                  onSelectionChange={(ids: string[]) => {
-                    formik.setValues({
-                      ...formik.values,
-                      SubscriptionFeature: ids as any
-                    });
+                <Label htmlFor='type'>Equipment Type</Label>
+                <Select
+                  value={formik.values.type}
+                  onValueChange={(value) => {
+                    formik.setFieldValue('type', value);
+                    formik.setFieldTouched('type', true);
                   }}
-                />
+                >
+                  <SelectTrigger
+                    className={
+                      formik.touched.type && formik.errors.type
+                        ? 'border-destructive'
+                        : ''
+                    }
+                  >
+                    <SelectValue placeholder='Select equipment type' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {equipmentTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {formik.touched.type && formik.errors.type && (
+                  <p className='text-destructive text-sm'>
+                    {formik.errors.type}
+                  </p>
+                )}
               </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='quantity'>Quantity</Label>
+                <Input
+                  id='quantity'
+                  name='quantity'
+                  placeholder='e.g., 2, 10 pairs, 1 set'
+                  value={formik.values.quantity}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                  className={
+                    formik.touched.quantity && formik.errors.quantity
+                      ? 'border-destructive'
+                      : ''
+                  }
+                />
+                {formik.touched.quantity && formik.errors.quantity && (
+                  <p className='text-destructive text-sm'>
+                    {formik.errors.quantity}
+                  </p>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='weight'>Weight (Optional)</Label>
+                <Input
+                  id='weight'
+                  name='weight'
+                  placeholder='e.g., 50kg, 25lbs, 10kg each'
+                  value={formik.values.weight}
+                  onChange={formik.handleChange}
+                  onBlur={formik.handleBlur}
+                />
+                <p className='text-muted-foreground text-sm'>
+                  Use for dumbbells, plates, bars, and other weighted equipment
+                </p>
+              </div>
+
               <DialogFooter>
                 <Button
                   type='button'
@@ -578,7 +609,7 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                   Cancel
                 </Button>
                 <Button
-                  type='submit'
+                  //   type='submit'
                   disabled={loading || formik.isSubmitting}
                   onClick={() => {
                     formik.handleSubmit();
@@ -592,9 +623,9 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                         : 'Updating...'}
                     </div>
                   ) : formik.values.action === 'create' ? (
-                    'Add Subscription'
+                    'Add Equipment'
                   ) : (
-                    'Update Subscription'
+                    'Update Equipment'
                   )}
                 </Button>
               </DialogFooter>

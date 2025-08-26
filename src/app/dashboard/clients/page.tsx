@@ -292,7 +292,7 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
                               variant={row.is_active ? 'default' : 'outline'}
                               className={
                                 row.is_active
-                                  ? 'bg-green-500'
+                                  ? 'bg-primary/10 text-primary'
                                   : 'text-destructive'
                               }
                             >

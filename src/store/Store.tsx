@@ -2,6 +2,8 @@ import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import clientsReducer from './ClientsSlice';
 import subscriptionsReducer from './SubscriptionSlice';
 import gymsReducer from './GymsSlice';
+import membersReducer from './MemberSlice';
+import equipmentReducer from './EquipmentSlice';
 import {
   useDispatch as useAppDispatch,
   useSelector as useAppSelector,
@@ -12,14 +14,18 @@ export const store = configureStore({
   reducer: {
     clients: clientsReducer,
     subscriptions: subscriptionsReducer,
-    gyms: gymsReducer
+    gyms: gymsReducer,
+    members: membersReducer,
+    equipment: equipmentReducer
   }
 });
 
 const rootReducer = combineReducers({
   clients: clientsReducer,
   subscriptions: subscriptionsReducer,
-  gyms: gymsReducer
+  gyms: gymsReducer,
+  members: membersReducer,
+  equipment: equipmentReducer
 });
 
 export type AppState = ReturnType<typeof rootReducer>;
