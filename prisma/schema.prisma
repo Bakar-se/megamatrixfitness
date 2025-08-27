@@ -15,46 +15,46 @@ enum Role {
 
 // User model
 model User {
-  id              String        @id @default(uuid())
-  first_name      String
-  last_name       String
-  phone_number    String
-  address         String
-  city            String
-  state           String
-  zip_code        String
-  country         String
-  date_of_birth   DateTime
-  cnic            String?
-  profile_picture String?
-  email           String?        
-  password        String?
-  role            Role
-  subscription_id String?
-  billing_model   BillingModel?
+  id                String        @id @default(uuid())
+  first_name        String
+  last_name         String
+  phone_number      String
+  address           String
+  city              String
+  state             String
+  zip_code          String
+  country           String
+  date_of_birth     DateTime
+  cnic              String?
+  profile_picture   String?
+  email             String?
+  password          String?
+  role              Role
+  subscription_id   String?
+  billing_model     BillingModel?
   next_payment_date DateTime?
-  is_active       Boolean       @default(true)
-  is_deleted      Boolean       @default(false)
-  subscription    Subscription? @relation(fields: [subscription_id], references: [id])
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  todos Todo[]
+  is_active         Boolean       @default(true)
+  is_deleted        Boolean       @default(false)
+  subscription      Subscription? @relation(fields: [subscription_id], references: [id])
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  todos             Todo[]
   // Relations
-  gyms_owned Gym[]   @relation("UserGyms") // one user can own many gyms
-  member     Member?
+  gyms_owned        Gym[]         @relation("UserGyms") // one user can own many gyms
+  member            Member?
 }
 
 model Todo {
-  id String @id @default(uuid())
-  title String
-  description String
-  is_completed Boolean @default(false)
-  is_active Boolean @default(true)
-  is_deleted Boolean @default(false)
-  user_id String
-  user User @relation(fields: [user_id], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  is_completed Boolean  @default(false)
+  is_active    Boolean  @default(true)
+  is_deleted   Boolean  @default(false)
+  user_id      String
+  user         User     @relation(fields: [user_id], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 enum BillingModel {
@@ -64,23 +64,23 @@ enum BillingModel {
 
 // Gym model
 model Gym {
-  id        String   @id @default(uuid())
-  name      String
-  owner_id  String
-  address   String?
-  city      String?
-  state     String?
-  zip_code  String?
-  country   String?
+  id           String       @id @default(uuid())
+  name         String
+  owner_id     String
+  address      String?
+  city         String?
+  state        String?
+  zip_code     String?
+  country      String?
   phone_number String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  is_active Boolean @default(true)
-  is_deleted Boolean @default(false)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  is_active    Boolean      @default(true)
+  is_deleted   Boolean      @default(false)
   // Relations
-  owner     User        @relation("UserGyms", fields: [owner_id], references: [id])
-  members   Member[]
-  equipment Equipment[]
+  owner        User         @relation("UserGyms", fields: [owner_id], references: [id])
+  members      Member[]
+  equipment    Equipment[]
 }
 
 // Member model
@@ -91,27 +91,41 @@ model Member {
   joinedAt DateTime @default(now())
 
   // Relations
-  user User @relation(fields: [user_id], references: [id])
-  gym  Gym  @relation(fields: [gym_id], references: [id])
+  user       User         @relation(fields: [user_id], references: [id])
+  gym        Gym          @relation(fields: [gym_id], references: [id])
+  MemberShipFee MemberShipFee[]
 }
+
+model MemberShipFee {
+  id         String   @id @default(uuid())
+  price      Int
+  start_date DateTime
+  end_date   DateTime
+  is_active  Boolean  @default(true)
+  is_deleted Boolean  @default(false)
+  // Relations
+  member_id  String
+  member     Member   @relation(fields: [member_id], references: [id])
+}
+
 
 // Equipment model
 model Equipment {
-  id       String  @id @default(uuid())
-  name     String
-  type     String
-  quantity String
-  weight   String?
-  is_active Boolean @default(true)
+  id         String  @id @default(uuid())
+  name       String
+  type       String
+  quantity   String
+  weight     String?
+  is_active  Boolean @default(true)
   is_deleted Boolean @default(false)
-  gym_id String
-  gym    Gym    @relation(fields: [gym_id], references: [id])
+  gym_id     String
+  gym        Gym     @relation(fields: [gym_id], references: [id])
 }
 
 model Subscription {
   id                  String                @id @default(uuid())
   name                String
-  monthly_price               Int
+  monthly_price       Int
   yearly_price        Int
   max_gyms            Int
   max_members         Int
@@ -120,8 +134,8 @@ model Subscription {
   updatedAt           DateTime              @updatedAt
   User                User[]
   SubscriptionFeature SubscriptionFeature[]
-  is_active Boolean @default(true)
-  is_deleted Boolean @default(false)
+  is_active           Boolean               @default(true)
+  is_deleted          Boolean               @default(false)
 }
 
 model SubscriptionFeature {
@@ -141,6 +155,6 @@ model Feature {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   SubscriptionFeature SubscriptionFeature[]
-  is_active Boolean @default(true)
-  is_deleted Boolean @default(false)
+  is_active           Boolean               @default(true)
+  is_deleted          Boolean               @default(false)
 }
