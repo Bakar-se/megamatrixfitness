@@ -18,14 +18,15 @@ Import and use the `useGymRefetch` hook:
 import { useGymRefetch } from '@/hooks/use-gym-refetch';
 
 export function YourComponent() {
-  const { refetchGyms, refetchGymsDelayed, refetchGymsWithFallback } = useGymRefetch();
+  const { refetchGyms, refetchGymsDelayed, refetchGymsWithFallback } =
+    useGymRefetch();
 
   const handleAddGym = async (gymData) => {
     try {
       const response = await fetch('/api/gyms/addgym', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(gymData),
+        body: JSON.stringify(gymData)
       });
 
       if (response.ok) {

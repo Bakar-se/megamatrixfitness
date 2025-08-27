@@ -47,6 +47,11 @@ export const OWNER_ROUTES: RouteConfig[] = [
     path: '/dashboard/equipments',
     roles: ['OWNER'],
     description: 'Manage equipments'
+  },
+  {
+    path: '/dashboard/todos',
+    roles: ['OWNER'],
+    description: 'Manage todos'
   }
 ];
 
@@ -84,6 +89,11 @@ export const AUTHENTICATED_ROUTES: RouteConfig[] = [
     path: '/dashboard/equipments',
     roles: ['OWNER'],
     description: 'Manage equipments'
+  },
+  {
+    path: '/dashboard/todos',
+    roles: ['OWNER'],
+    description: 'Manage todos'
   }
 ];
 

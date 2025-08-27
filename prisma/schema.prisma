@@ -38,10 +38,23 @@ model User {
   subscription    Subscription? @relation(fields: [subscription_id], references: [id])
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
-
+  todos Todo[]
   // Relations
   gyms_owned Gym[]   @relation("UserGyms") // one user can own many gyms
   member     Member?
+}
+
+model Todo {
+  id String @id @default(uuid())
+  title String
+  description String
+  is_completed Boolean @default(false)
+  is_active Boolean @default(true)
+  is_deleted Boolean @default(false)
+  user_id String
+  user User @relation(fields: [user_id], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum BillingModel {

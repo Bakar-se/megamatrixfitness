@@ -29,11 +29,9 @@ export default async function handler(
 
     // Only owners can toggle equipment status
     if (user.role !== 'OWNER') {
-      return res
-        .status(403)
-        .json({
-          message: 'Access denied. Only owners can toggle equipment status.'
-        });
+      return res.status(403).json({
+        message: 'Access denied. Only owners can toggle equipment status.'
+      });
     }
 
     const { id, status } = req.body;

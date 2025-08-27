@@ -66,11 +66,9 @@ export default async function handler(
     });
 
     if (existingEquipment) {
-      return res
-        .status(400)
-        .json({
-          message: 'Equipment with this name already exists in this gym'
-        });
+      return res.status(400).json({
+        message: 'Equipment with this name already exists in this gym'
+      });
     }
 
     // Create the equipment

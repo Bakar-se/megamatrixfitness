@@ -4,6 +4,7 @@ import subscriptionsReducer from './SubscriptionSlice';
 import gymsReducer from './GymsSlice';
 import membersReducer from './MemberSlice';
 import equipmentReducer from './EquipmentSlice';
+import todoReducer from './TodoSlice';
 import {
   useDispatch as useAppDispatch,
   useSelector as useAppSelector,
@@ -16,7 +17,8 @@ export const store = configureStore({
     subscriptions: subscriptionsReducer,
     gyms: gymsReducer,
     members: membersReducer,
-    equipment: equipmentReducer
+    equipment: equipmentReducer,
+    todos: todoReducer
   }
 });
 
@@ -25,7 +27,8 @@ const rootReducer = combineReducers({
   subscriptions: subscriptionsReducer,
   gyms: gymsReducer,
   members: membersReducer,
-  equipment: equipmentReducer
+  equipment: equipmentReducer,
+  todos: todoReducer
 });
 
 export type AppState = ReturnType<typeof rootReducer>;

@@ -66,6 +66,15 @@ export const navItems: NavItem[] = [
     shortcut: ['e', 'e'],
     items: [], // Empty array as there are no child items for Equipment
     roles: ['OWNER'] // Only OWNER can view equipment
+  },
+  {
+    title: 'Todos',
+    url: '/dashboard/todos',
+    icon: 'todo',
+    isActive: false,
+    shortcut: ['t', 't'],
+    items: [], // Empty array as there are no child items for Equipment
+    roles: ['OWNER'] // Only OWNER can view equipment
   }
   // {
   //   title: 'Products',
