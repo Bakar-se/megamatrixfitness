@@ -6,10 +6,10 @@
     "name": "Developers",
     "url": "https://github.com/Kiranism"
   },
-  "postinstall": "npx prisma generate && npx prisma db push",
+  "postinstall": "npx prisma generate && npx prisma db seed",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "npx prisma generate && next build",
+    "build": "npx prisma generate && npx prisma db seed && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && npm run format",
