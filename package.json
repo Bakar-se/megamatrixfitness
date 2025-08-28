@@ -6,10 +6,10 @@
     "name": "Developers",
     "url": "https://github.com/Kiranism"
   },
-  "postinstall": "prisma db push",
+  "postinstall": "prisma generate && prisma db push",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && npm run format",
