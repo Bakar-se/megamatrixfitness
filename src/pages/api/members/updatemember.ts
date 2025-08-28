@@ -46,7 +46,13 @@ export default async function handler(
       state,
       zip_code,
       country,
-      date_of_birth
+      date_of_birth,
+      // Membership fee fields
+      membership_price,
+      membership_start_date,
+      membership_end_date,
+      membership_months,
+      membership_end_date_type
     } = req.body;
 
     if (!id || !user_id) {
@@ -89,7 +95,7 @@ export default async function handler(
       }
     }
 
-    // Use transaction to update both user and member
+    // Use transaction to update user, member, and handle membership fee
     const result = await prisma.$transaction(async (tx) => {
       // Update user information
       const updatedUser = await tx.user.update({
@@ -107,6 +113,60 @@ export default async function handler(
           ...(date_of_birth && { date_of_birth: new Date(date_of_birth) })
         }
       });
+
+      // Handle membership fee if provided
+      if (
+        membership_price &&
+        membership_start_date &&
+        membership_end_date_type
+      ) {
+        let calculatedEndDate: Date;
+
+        if (membership_end_date_type === 'months' && membership_months) {
+          // Calculate end date based on months
+          const startDate = new Date(membership_start_date);
+          calculatedEndDate = new Date(startDate);
+          calculatedEndDate.setMonth(
+            calculatedEndDate.getMonth() + parseInt(membership_months)
+          );
+        } else if (
+          membership_end_date_type === 'end_date' &&
+          membership_end_date
+        ) {
+          // Use provided end date
+          calculatedEndDate = new Date(membership_end_date);
+        } else {
+          throw new Error('Invalid membership end date configuration');
+        }
+
+        // Check if membership fee already exists
+        const existingFee = await tx.membership_fee.findFirst({
+          where: { member_id: id }
+        });
+
+        if (existingFee) {
+          // Update existing fee
+          await tx.membership_fee.update({
+            where: { id: existingFee.id },
+            data: {
+              price: parseInt(membership_price),
+              start_date: new Date(membership_start_date),
+              end_date: calculatedEndDate
+            }
+          });
+        } else {
+          // Create new fee
+          await tx.membership_fee.create({
+            data: {
+              price: parseInt(membership_price),
+              start_date: new Date(membership_start_date),
+              end_date: calculatedEndDate,
+              member_id: id,
+              is_active: true
+            }
+          });
+        }
+      }
 
       // Get the updated member with user and gym details
       const updatedMember = await tx.member.findUnique({

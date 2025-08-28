@@ -258,7 +258,7 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.equipment.map((equipment) => (
+                    {data.equipment.map((equipment: any) => (
                       <TableRow key={equipment.id}>
                         <TableCell className='font-medium'>
                           {equipment.name}

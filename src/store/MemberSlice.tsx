@@ -2,6 +2,18 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 // Types
+export interface MemberShipFee {
+  id: string;
+  price: number;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+  is_deleted: boolean;
+  member_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Member {
   id: string;
   user_id: string;
@@ -26,6 +38,7 @@ export interface Member {
     id: string;
     name: string;
   };
+  memberShipFees: MemberShipFee[];
 }
 
 export interface CreateMemberData {
@@ -41,11 +54,40 @@ export interface CreateMemberData {
   date_of_birth: string;
   password: string;
   gym_id: string;
+  // Membership fee fields
+  membership_price?: string;
+  membership_start_date?: string;
+  membership_end_date?: string;
+  membership_months?: string;
+  membership_end_date_type?: string;
 }
 
 export interface UpdateMemberData extends Partial<CreateMemberData> {
   id: string;
   user_id: string;
+  // Membership fee fields
+  membership_price?: string;
+  membership_start_date?: string;
+  membership_end_date?: string;
+  membership_months?: string;
+  membership_end_date_type?: string;
+}
+
+export interface CreateMembershipFeeData {
+  member_id: string;
+  price: number;
+  start_date: string;
+  end_date?: string;
+  months?: number;
+  end_date_type: 'end_date' | 'months';
+}
+
+export interface UpdateMembershipFeeData {
+  id: string;
+  price?: number;
+  start_date?: string;
+  end_date?: string;
+  is_active?: boolean;
 }
 
 // Initial state

@@ -17,6 +17,7 @@ import {
   updateMember,
   deleteMember
 } from '@/store/MemberSlice';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Dialog,
   DialogTitle,
@@ -103,7 +104,11 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
     state: yup.string().required('State is required'),
     zip_code: yup.string().required('Zip is required'),
     country: yup.string().required('Country is required'),
-    password: yup.string().required('Password is required'),
+    password: yup.string().when('action', {
+      is: 'create',
+      then: (schema) => schema.required('Password is required'),
+      otherwise: (schema) => schema.optional()
+    }),
     date_of_birth: yup
       .date()
       .required('Date of birth is required')
@@ -127,12 +132,19 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
       open: false,
       password: '',
       date_of_birth: '',
-      gym_id: session?.user?.selected_location_id
+      gym_id: session?.user?.selected_location_id,
+      // Membership fee fields
+      membership_price: '',
+      membership_start_date: '',
+      membership_end_date: '',
+      membership_months: '',
+      membership_end_date_type: 'months'
     },
     validationSchema: validationSchema,
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
+      console.log(values);
       try {
         if (!session?.user?.selected_location_id) {
           toast.error('Please select a gym first');
@@ -143,7 +155,15 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
           const result = await dispatch(
             addMember({
               ...values,
-              gym_id: selectedGymId
+              gym_id: selectedGymId,
+              // Include membership fee fields if provided
+              ...(values.membership_price && {
+                membership_price: values.membership_price,
+                membership_start_date: values.membership_start_date,
+                membership_end_date: values.membership_end_date,
+                membership_months: values.membership_months,
+                membership_end_date_type: values.membership_end_date_type
+              })
             })
           );
           if (addMember.fulfilled.match(result)) {
@@ -167,7 +187,15 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
         } else {
           const result = await dispatch(
             updateMember({
-              ...values
+              ...values,
+              // Include membership fee fields if provided
+              ...(values.membership_price && {
+                membership_price: values.membership_price,
+                membership_start_date: values.membership_start_date,
+                membership_end_date: values.membership_end_date,
+                membership_months: values.membership_months,
+                membership_end_date_type: values.membership_end_date_type
+              })
             })
           );
           if (updateMember.fulfilled.match(result)) {
@@ -218,7 +246,7 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
       </PageContainer>
     );
   }
-
+  console.log(formik.errors);
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
@@ -253,6 +281,8 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Joined Date</TableHead>
+                      <TableHead>Membership Status</TableHead>
+                      <TableHead>Membership Expiry</TableHead>
                       <TableHead className='text-right'>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -285,6 +315,42 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                         <TableCell className=''>
                           {new Date(member.joinedAt).toLocaleDateString()}
                         </TableCell>
+                        <TableCell>
+                          {member.memberShipFees &&
+                          member.memberShipFees.length > 0 ? (
+                            <Badge
+                              variant={
+                                member.memberShipFees[0].is_active
+                                  ? 'default'
+                                  : 'outline'
+                              }
+                              className={
+                                member.memberShipFees[0].is_active
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'text-destructive'
+                              }
+                            >
+                              {member.memberShipFees[0].is_active
+                                ? 'Active'
+                                : 'Inactive'}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant='outline'
+                              className='text-muted-foreground'
+                            >
+                              No Membership
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {member.memberShipFees &&
+                          member.memberShipFees.length > 0
+                            ? new Date(
+                                member.memberShipFees[0].end_date
+                              ).toLocaleDateString()
+                            : '-'}
+                        </TableCell>
                         <TableCell className=''>
                           <div className='flex justify-end gap-2'>
                             <CustomTooltip
@@ -292,7 +358,13 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                                 <Button
                                   variant='outline'
                                   size='icon'
-                                  onClick={() =>
+                                  onClick={() => {
+                                    const membershipFee =
+                                      member.memberShipFees &&
+                                      member.memberShipFees.length > 0
+                                        ? member.memberShipFees[0]
+                                        : null;
+
                                     formik.setValues({
                                       ...formik.values,
                                       id: member.id,
@@ -311,10 +383,26 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                                             .toISOString()
                                             .split('T')[0]
                                         : '',
+                                      // Membership fee fields
+                                      membership_price: membershipFee
+                                        ? membershipFee.price.toString()
+                                        : '',
+                                      membership_start_date: membershipFee
+                                        ? new Date(membershipFee.start_date)
+                                            .toISOString()
+                                            .split('T')[0]
+                                        : '',
+                                      membership_end_date: membershipFee
+                                        ? new Date(membershipFee.end_date)
+                                            .toISOString()
+                                            .split('T')[0]
+                                        : '',
+                                      membership_months: '',
+                                      membership_end_date_type: 'months',
                                       action: 'update',
                                       open: true
-                                    })
-                                  }
+                                    });
+                                  }}
                                 >
                                   <IconEdit />
                                 </Button>
@@ -690,6 +778,93 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                   helperText={formik.errors.country as string}
                 />
               </div>
+
+              {/* Membership Fee Section */}
+              <div className='space-y-4 border-t pt-4'>
+                <Label className='text-base font-semibold'>
+                  Membership Fee
+                </Label>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='membership_price'>Price</Label>
+                  <Input
+                    id='membership_price'
+                    name='membership_price'
+                    type='number'
+                    placeholder='Enter price'
+                    value={formik.values.membership_price}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='membership_start_date'>Start Date</Label>
+                  <Input
+                    type='date'
+                    id='membership_start_date'
+                    name='membership_start_date'
+                    value={formik.values.membership_start_date}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                  />
+                </div>
+
+                <div className='space-y-2'>
+                  <Label>End Date Type</Label>
+                  <RadioGroup
+                    value={formik.values.membership_end_date_type || 'months'}
+                    onValueChange={(value) => {
+                      formik.setFieldValue('membership_end_date_type', value);
+
+                      // Clear the other field when switching types
+                      if (value === 'months') {
+                        formik.setFieldValue('membership_end_date', '');
+                      } else {
+                        formik.setFieldValue('membership_months', '');
+                      }
+                    }}
+                    className='flex flex-col space-y-1'
+                  >
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='months' id='months' />
+                      <Label htmlFor='months'>Number of Months</Label>
+                    </div>
+                    <div className='flex items-center space-x-2'>
+                      <RadioGroupItem value='end_date' id='end_date' />
+                      <Label htmlFor='end_date'>Specific End Date</Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {formik.values.membership_end_date_type === 'months' ? (
+                  <div className='space-y-2'>
+                    <Label htmlFor='membership_months'>Number of Months</Label>
+                    <Input
+                      id='membership_months'
+                      name='membership_months'
+                      type='number'
+                      min='1'
+                      placeholder='Enter number of months'
+                      value={formik.values.membership_months}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                  </div>
+                ) : (
+                  <div className='space-y-2'>
+                    <Label htmlFor='membership_end_date'>End Date</Label>
+                    <Input
+                      type='date'
+                      id='membership_end_date'
+                      name='membership_end_date'
+                      value={formik.values.membership_end_date}
+                      onChange={formik.handleChange}
+                      onBlur={formik.handleBlur}
+                    />
+                  </div>
+                )}
+              </div>
               {/* <div className='space-y-2'>
                 <Label htmlFor='cnic'>CNIC</Label>
                 <SingleFileUploader
@@ -724,7 +899,13 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                 >
                   Cancel
                 </Button>
-                <Button type='submit' disabled={loading || formik.isSubmitting}>
+                <Button
+                  type='submit'
+                  disabled={formik.isSubmitting}
+                  onClick={() => {
+                    formik.handleSubmit();
+                  }}
+                >
                   {formik.isSubmitting ? (
                     <div className='flex items-center gap-2'>
                       <Loader isLoading={true} size={16} />

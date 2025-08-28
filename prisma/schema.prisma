@@ -93,19 +93,24 @@ model Member {
   // Relations
   user       User         @relation(fields: [user_id], references: [id])
   gym        Gym          @relation(fields: [gym_id], references: [id])
-  MemberShipFee MemberShipFee[]
+  membership_fee membership_fee[]
 }
 
-model MemberShipFee {
+model membership_fee {
   id         String   @id @default(uuid())
   price      Int
   start_date DateTime
   end_date   DateTime
+  is_expired Boolean  @default(false)
+  notification_sent Boolean  @default(false)
   is_active  Boolean  @default(true)
   is_deleted Boolean  @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
   // Relations
   member_id  String
   member     Member   @relation(fields: [member_id], references: [id])
+  
 }
 
 

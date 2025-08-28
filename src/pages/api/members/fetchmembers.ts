@@ -53,7 +53,7 @@ export default async function handler(
       return res.status(404).json({ message: 'Gym not found' });
     }
 
-    // Fetch members with user and gym details
+    // Fetch members with user, gym, and membership fee details
     const members = await prisma.member.findMany({
       where: {
         gym_id: gym_id,
@@ -84,6 +84,10 @@ export default async function handler(
             id: true,
             name: true
           }
+        },
+        membership_fee: {
+          where: { is_deleted: false },
+          orderBy: { createdAt: 'desc' }
         }
       },
       orderBy: { joinedAt: 'desc' }

@@ -47,7 +47,13 @@ export default async function handler(
       country,
       date_of_birth,
       password,
-      gym_id
+      gym_id,
+      // Membership fee fields
+      membership_price,
+      membership_start_date,
+      membership_end_date,
+      membership_months,
+      membership_end_date_type
     } = req.body;
 
     // Validate required fields
@@ -98,7 +104,7 @@ export default async function handler(
     // Hash the password
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Use transaction to create both user and member
+    // Use transaction to create user, member, and membership fee
     const result = await prisma.$transaction(async (tx) => {
       // First, create the user
       const newUser = await tx.user.create({
@@ -151,6 +157,42 @@ export default async function handler(
           }
         }
       });
+
+      // Create membership fee if provided
+      if (
+        membership_price &&
+        membership_start_date &&
+        membership_end_date_type
+      ) {
+        let calculatedEndDate: Date;
+
+        if (membership_end_date_type === 'months' && membership_months) {
+          // Calculate end date based on months
+          const startDate = new Date(membership_start_date);
+          calculatedEndDate = new Date(startDate);
+          calculatedEndDate.setMonth(
+            calculatedEndDate.getMonth() + parseInt(membership_months)
+          );
+        } else if (
+          membership_end_date_type === 'end_date' &&
+          membership_end_date
+        ) {
+          // Use provided end date
+          calculatedEndDate = new Date(membership_end_date);
+        } else {
+          throw new Error('Invalid membership end date configuration');
+        }
+
+        await tx.membership_fee.create({
+          data: {
+            price: parseInt(membership_price),
+            start_date: new Date(membership_start_date),
+            end_date: calculatedEndDate,
+            member_id: newMember.id,
+            is_active: true
+          }
+        });
+      }
 
       return { user: newUser, member: newMember };
     });
