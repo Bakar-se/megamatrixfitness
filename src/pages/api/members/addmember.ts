@@ -105,7 +105,7 @@ export default async function handler(
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Use transaction to create user, member, and membership fee
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // First, create the user
       const newUser = await tx.user.create({
         data: {

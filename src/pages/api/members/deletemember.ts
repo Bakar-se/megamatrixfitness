@@ -60,7 +60,7 @@ export default async function handler(
     }
 
     // Use transaction to soft delete both member and user
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Soft delete the member
       const deletedMember = await tx.member.update({
         where: { id: id },

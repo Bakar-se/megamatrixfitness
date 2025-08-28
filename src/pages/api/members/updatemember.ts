@@ -96,7 +96,7 @@ export default async function handler(
     }
 
     // Use transaction to update user, member, and handle membership fee
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // Update user information
       const updatedUser = await tx.user.update({
         where: { id: user_id },
