@@ -35,11 +35,24 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
-import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPlus,
+  IconPower,
+  IconTrash,
+  IconDownload
+} from '@tabler/icons-react';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
 import { OwnerOnly } from '@/components/permission-guard';
+import { exportTableToCSV, exportTableToExcel } from '@/lib/export-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -225,18 +238,61 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Equipment</h3>
-          <Button
-            onClick={() => {
-              formik.setValues({
-                ...formik.values,
-                action: 'create',
-                open: true
-              });
-            }}
-          >
-            <IconPlus className='mr-2 h-4 w-4' />
-            New Equipment
-          </Button>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  disabled={
+                    loading || !data.equipment || data.equipment.length === 0
+                  }
+                >
+                  <IconDownload className='mr-2 h-4 w-4' />
+                  Download as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToCSV(table, 'equipment.csv');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.equipment || data.equipment.length === 0
+                  }
+                >
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToExcel(table, 'equipment');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.equipment || data.equipment.length === 0
+                  }
+                >
+                  XLSX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                formik.setValues({
+                  ...formik.values,
+                  action: 'create',
+                  open: true
+                });
+              }}
+            >
+              <IconPlus className='mr-2 h-4 w-4' />
+              New Equipment
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent>
@@ -258,224 +314,237 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.equipment.map((equipment: any) => (
-                      <TableRow key={equipment.id}>
-                        <TableCell className='font-medium'>
-                          {equipment.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant='outline' className='capitalize'>
-                            {equipment.type.toLowerCase()}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{equipment.quantity}</TableCell>
-                        <TableCell>{equipment.weight || '-'}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              equipment.is_active ? 'default' : 'outline'
-                            }
-                            className={
-                              equipment.is_active
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-destructive'
-                            }
-                          >
-                            {equipment.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className=''>
-                          <div className='flex justify-end gap-2'>
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    formik.setValues({
-                                      ...formik.values,
-                                      id: equipment.id,
-                                      name: equipment.name,
-                                      type: equipment.type,
-                                      quantity: equipment.quantity,
-                                      weight: equipment.weight || '',
-                                      action: 'update',
-                                      open: true
-                                    })
-                                  }
-                                >
-                                  <IconEdit />
-                                </Button>
+                    {data.equipment && data.equipment.length > 0 ? (
+                      data.equipment.map((equipment: any) => (
+                        <TableRow key={equipment.id}>
+                          <TableCell className='font-medium'>
+                            {equipment.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant='outline' className='capitalize'>
+                              {equipment.type.toLowerCase()}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{equipment.quantity}</TableCell>
+                          <TableCell>{equipment.weight || '-'}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                equipment.is_active ? 'default' : 'outline'
                               }
-                              content={'Edit'}
-                            />
-
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: equipment.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      description: equipment.is_active
-                                        ? 'Are you sure you want to deactivate this equipment?'
-                                        : 'Are you sure you want to activate this equipment?',
-                                      cancelText: 'Cancel',
-                                      confirmText: equipment.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            toggleEquipmentStatus({
-                                              id: equipment.id,
-                                              status: !equipment.is_active
-                                            })
-                                          );
-                                          if (
-                                            toggleEquipmentStatus.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              `Equipment ${!equipment.is_active ? 'activated' : 'deactivated'} successfully!`
-                                            );
-                                            // Refresh the equipment list
-                                            dispatch(
-                                              fetchEquipment(selectedGymId)
-                                            );
-                                          } else if (
-                                            toggleEquipmentStatus.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to update equipment status';
-                                            toast.error(errorMessage);
-                                          }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Toggle status error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconPower
-                                    className={
-                                      equipment.is_active
-                                        ? 'text-primary'
-                                        : 'text-destructive'
+                              className={
+                                equipment.is_active
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'text-destructive'
+                              }
+                            >
+                              {equipment.is_active ? 'Active' : 'Inactive'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className=''>
+                            <div className='flex justify-end gap-2'>
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      formik.setValues({
+                                        ...formik.values,
+                                        id: equipment.id,
+                                        name: equipment.name,
+                                        type: equipment.type,
+                                        quantity: equipment.quantity,
+                                        weight: equipment.weight || '',
+                                        action: 'update',
+                                        open: true
+                                      })
                                     }
-                                  />
-                                </Button>
-                              }
-                              content={
-                                equipment.is_active ? 'Deactivate' : 'Activate'
-                              }
-                            />
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: 'Delete Equipment',
-                                      description:
-                                        'Are you sure you want to delete this equipment? This action cannot be undone.',
-                                      cancelText: 'Cancel',
-                                      confirmText: 'Delete',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            deleteEquipment(equipment.id)
-                                          );
-                                          if (
-                                            deleteEquipment.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              'Equipment deleted successfully!'
+                                  >
+                                    <IconEdit />
+                                  </Button>
+                                }
+                                content={'Edit'}
+                              />
+
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: equipment.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        description: equipment.is_active
+                                          ? 'Are you sure you want to deactivate this equipment?'
+                                          : 'Are you sure you want to activate this equipment?',
+                                        cancelText: 'Cancel',
+                                        confirmText: equipment.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              toggleEquipmentStatus({
+                                                id: equipment.id,
+                                                status: !equipment.is_active
+                                              })
                                             );
-                                            // Refresh the equipment list
-                                            dispatch(
-                                              fetchEquipment(selectedGymId)
+                                            if (
+                                              toggleEquipmentStatus.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                `Equipment ${!equipment.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              );
+                                              // Refresh the equipment list
+                                              dispatch(
+                                                fetchEquipment(selectedGymId)
+                                              );
+                                            } else if (
+                                              toggleEquipmentStatus.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to update equipment status';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
                                             );
-                                          } else if (
-                                            deleteEquipment.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to delete equipment';
-                                            toast.error(errorMessage);
+                                            console.error(
+                                              'Toggle status error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Delete equipment error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconTrash />
-                                </Button>
-                              }
-                              content={'Delete'}
-                            />
-                          </div>
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconPower
+                                      className={
+                                        equipment.is_active
+                                          ? 'text-primary'
+                                          : 'text-destructive'
+                                      }
+                                    />
+                                  </Button>
+                                }
+                                content={
+                                  equipment.is_active
+                                    ? 'Deactivate'
+                                    : 'Activate'
+                                }
+                              />
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: 'Delete Equipment',
+                                        description:
+                                          'Are you sure you want to delete this equipment? This action cannot be undone.',
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Delete',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              deleteEquipment(equipment.id)
+                                            );
+                                            if (
+                                              deleteEquipment.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                'Equipment deleted successfully!'
+                                              );
+                                              // Refresh the equipment list
+                                              dispatch(
+                                                fetchEquipment(selectedGymId)
+                                              );
+                                            } else if (
+                                              deleteEquipment.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to delete equipment';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Delete equipment error:',
+                                              error
+                                            );
+                                          }
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconTrash />
+                                  </Button>
+                                }
+                                content={'Delete'}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className='text-muted-foreground py-8 text-center'
+                        >
+                          No equipment found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

@@ -38,7 +38,7 @@ export interface Member {
     id: string;
     name: string;
   };
-  memberShipFees: MemberShipFee[];
+  membership_fee: MemberShipFee[];
 }
 
 export interface CreateMemberData {

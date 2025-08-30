@@ -37,8 +37,21 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
-import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPlus,
+  IconPower,
+  IconTrash,
+  IconDownload
+} from '@tabler/icons-react';
 import axios from 'axios';
+import { exportTableToCSV, exportTableToExcel } from '@/lib/export-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -249,18 +262,61 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Clients</h3>
-          <Button
-            onClick={() => {
-              formik.setValues({
-                ...formik.values,
-                action: 'create',
-                open: true
-              });
-            }}
-          >
-            <IconPlus className='mr-2 h-4 w-4' />
-            New Client
-          </Button>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  disabled={
+                    loading || !data.clients || data.clients.length === 0
+                  }
+                >
+                  <IconDownload className='mr-2 h-4 w-4' />
+                  Download as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToCSV(table, 'clients.csv');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.clients || data.clients.length === 0
+                  }
+                >
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToExcel(table, 'clients');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.clients || data.clients.length === 0
+                  }
+                >
+                  XLSX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                formik.setValues({
+                  ...formik.values,
+                  action: 'create',
+                  open: true
+                });
+              }}
+            >
+              <IconPlus className='mr-2 h-4 w-4' />
+              New Client
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent>
@@ -281,211 +337,228 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.clients.map((row: User) => (
-                      <TableRow key={row.id}>
-                        <TableCell>
-                          {row.first_name} {row.last_name}
-                        </TableCell>
-                        <TableCell className=''>
-                          <div className='flex flex-col gap-2'>
-                            <Badge
-                              variant={row.is_active ? 'default' : 'outline'}
-                              className={
-                                row.is_active
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'text-destructive'
-                              }
-                            >
-                              {row.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className=''>{row.email}</TableCell>
-                        <TableCell className=''>+{row.phone_number}</TableCell>
-                        <TableCell></TableCell>
-                        <TableCell className=''>
-                          <div className='flex justify-end gap-2'>
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    formik.setValues({
-                                      ...formik.values,
-                                      ...row,
-                                      action: 'view',
-                                      open: true,
-                                      date_of_birth: row.date_of_birth
-                                        ? new Date(row.date_of_birth)
-                                            .toISOString()
-                                            .split('T')[0]
-                                        : ''
-                                    } as any)
-                                  }
-                                >
-                                  <IconEdit />
-                                </Button>
-                              }
-                              content={'Edit'}
-                            />
-
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: row.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      description: row.is_active
-                                        ? 'Are you sure you want to deactivate this subscription?'
-                                        : 'Are you sure you want to activate this subscription?',
-                                      cancelText: 'Cancel',
-                                      confirmText: row.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            toggleClientStatus({
-                                              id: row.id,
-                                              status: !row.is_active
-                                            })
-                                          );
-                                          if (
-                                            toggleClientStatus.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              `Client ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
-                                            );
-                                          } else if (
-                                            toggleClientStatus.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to update client status';
-                                            toast.error(errorMessage);
-                                          }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Toggle status error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconPower
-                                    className={
-                                      row.is_active
-                                        ? 'text-primary'
-                                        : 'text-destructive'
+                    {data.clients && data.clients.length > 0 ? (
+                      data.clients.map((row: User) => (
+                        <TableRow key={row.id}>
+                          <TableCell>
+                            {row.first_name} {row.last_name}
+                          </TableCell>
+                          <TableCell className=''>
+                            <div className='flex flex-col gap-2'>
+                              <Badge
+                                variant={row.is_active ? 'default' : 'outline'}
+                                className={
+                                  row.is_active
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {row.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className=''>{row.email}</TableCell>
+                          <TableCell className=''>
+                            +{row.phone_number}
+                          </TableCell>
+                          <TableCell></TableCell>
+                          <TableCell className=''>
+                            <div className='flex justify-end gap-2'>
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      formik.setValues({
+                                        ...formik.values,
+                                        ...row,
+                                        action: 'view',
+                                        open: true,
+                                        date_of_birth: row.date_of_birth
+                                          ? new Date(row.date_of_birth)
+                                              .toISOString()
+                                              .split('T')[0]
+                                          : ''
+                                      } as any)
                                     }
-                                  />
-                                </Button>
-                              }
-                              content={
-                                row.is_active ? 'Deactivate' : 'Activate'
-                              }
-                            />
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: 'Delete Subscription',
-                                      description:
-                                        'Are you sure you want to delete this subscription?',
-                                      cancelText: 'Cancel',
-                                      confirmText: 'Delete',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            deleteClient({
-                                              id: row.id
-                                            })
-                                          );
-                                          if (
-                                            deleteClient.fulfilled.match(result)
-                                          ) {
-                                            toast.success(
-                                              'Client deleted successfully!'
+                                  >
+                                    <IconEdit />
+                                  </Button>
+                                }
+                                content={'Edit'}
+                              />
+
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: row.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        description: row.is_active
+                                          ? 'Are you sure you want to deactivate this subscription?'
+                                          : 'Are you sure you want to activate this subscription?',
+                                        cancelText: 'Cancel',
+                                        confirmText: row.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              toggleClientStatus({
+                                                id: row.id,
+                                                status: !row.is_active
+                                              })
                                             );
-                                          } else if (
-                                            deleteClient.rejected.match(result)
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to delete client';
-                                            toast.error(errorMessage);
+                                            if (
+                                              toggleClientStatus.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                `Client ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              );
+                                            } else if (
+                                              toggleClientStatus.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to update client status';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Toggle status error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Delete client error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconTrash />
-                                </Button>
-                              }
-                              content={'Delete'}
-                            />
-                          </div>
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconPower
+                                      className={
+                                        row.is_active
+                                          ? 'text-primary'
+                                          : 'text-destructive'
+                                      }
+                                    />
+                                  </Button>
+                                }
+                                content={
+                                  row.is_active ? 'Deactivate' : 'Activate'
+                                }
+                              />
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: 'Delete Subscription',
+                                        description:
+                                          'Are you sure you want to delete this subscription?',
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Delete',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              deleteClient({
+                                                id: row.id
+                                              })
+                                            );
+                                            if (
+                                              deleteClient.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                'Client deleted successfully!'
+                                              );
+                                            } else if (
+                                              deleteClient.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to delete client';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Delete client error:',
+                                              error
+                                            );
+                                          }
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconTrash />
+                                  </Button>
+                                }
+                                content={'Delete'}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className='text-muted-foreground py-8 text-center'
+                        >
+                          No clients found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

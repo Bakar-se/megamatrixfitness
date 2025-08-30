@@ -43,6 +43,14 @@ export function OrgSwitcher({
     }
   }, [defaultTenant, selectedTenant?.id]);
 
+  // Set default location when component mounts and no location is selected
+  React.useEffect(() => {
+    if (tenants.length > 0 && !session?.user?.selected_location_id) {
+      const defaultGym = tenants[0];
+      handleTenantSwitch(defaultGym);
+    }
+  }, [tenants, session?.user?.selected_location_id]);
+
   const handleTenantSwitch = (gym: Gym) => {
     try {
       update({

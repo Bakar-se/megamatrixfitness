@@ -33,11 +33,24 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
-import { IconEdit, IconPlus, IconTrash, IconCheck } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPlus,
+  IconTrash,
+  IconCheck,
+  IconDownload
+} from '@tabler/icons-react';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
 import { OwnerOnly } from '@/components/permission-guard';
+import { exportTableToCSV, exportTableToExcel } from '@/lib/export-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import {
   Select,
   SelectContent,
@@ -186,18 +199,55 @@ const TodoListing: React.FC<EquipmentListingProps> = ({ session }) => {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Todos</h3>
-          <Button
-            onClick={() => {
-              formik.setValues({
-                ...formik.values,
-                action: 'create',
-                open: true
-              });
-            }}
-          >
-            <IconPlus className='mr-2 h-4 w-4' />
-            New Todo
-          </Button>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  disabled={loading || !data.todos || data.todos.length === 0}
+                >
+                  <IconDownload className='mr-2 h-4 w-4' />
+                  Download as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToCSV(table, 'todos.csv');
+                    }
+                  }}
+                  disabled={loading || !data.todos || data.todos.length === 0}
+                >
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToExcel(table, 'todos');
+                    }
+                  }}
+                  disabled={loading || !data.todos || data.todos.length === 0}
+                >
+                  XLSX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                formik.setValues({
+                  ...formik.values,
+                  action: 'create',
+                  open: true
+                });
+              }}
+            >
+              <IconPlus className='mr-2 h-4 w-4' />
+              New Todo
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent>
@@ -217,136 +267,149 @@ const TodoListing: React.FC<EquipmentListingProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.todos.map((todo: any) => (
-                      <TableRow key={todo.id}>
-                        <TableCell className='font-medium'>
-                          {todo.title}
-                        </TableCell>
-                        <TableCell className='max-w-[400px] truncate'>
-                          {todo.description || '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant={todo.is_completed ? 'ghost' : 'ghost'}
-                            size='sm'
-                            onClick={async () => {
-                              const result = await dispatch(
-                                toggleTodoCompleted({
-                                  id: todo.id,
-                                  completed: !todo.is_completed
-                                })
-                              );
-                              if (toggleTodoCompleted.fulfilled.match(result)) {
-                                toast.success('Todo status updated');
-                              } else {
-                                toast.error(
-                                  (result.payload as any)?.message ||
-                                    'Failed to update status'
+                    {data.todos && data.todos.length > 0 ? (
+                      data.todos.map((todo: any) => (
+                        <TableRow key={todo.id}>
+                          <TableCell className='font-medium'>
+                            {todo.title}
+                          </TableCell>
+                          <TableCell className='max-w-[400px] truncate'>
+                            {todo.description || '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant={todo.is_completed ? 'ghost' : 'ghost'}
+                              size='sm'
+                              onClick={async () => {
+                                const result = await dispatch(
+                                  toggleTodoCompleted({
+                                    id: todo.id,
+                                    completed: !todo.is_completed
+                                  })
                                 );
-                              }
-                            }}
-                          >
-                            <IconCheck
-                              className={
-                                todo.is_completed ? 'text-primary' : ''
-                              }
-                            />
-                          </Button>
-                        </TableCell>
-                        <TableCell className=''>
-                          <div className='flex justify-end gap-2'>
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    formik.setValues({
-                                      ...formik.values,
-                                      id: todo.id,
-                                      title: todo.title,
-                                      description: todo.description || '',
-                                      action: 'update',
-                                      open: true
-                                    })
-                                  }
-                                >
-                                  <IconEdit />
-                                </Button>
-                              }
-                              content={'Edit'}
-                            />
+                                if (
+                                  toggleTodoCompleted.fulfilled.match(result)
+                                ) {
+                                  toast.success('Todo status updated');
+                                } else {
+                                  toast.error(
+                                    (result.payload as any)?.message ||
+                                      'Failed to update status'
+                                  );
+                                }
+                              }}
+                            >
+                              <IconCheck
+                                className={
+                                  todo.is_completed ? 'text-primary' : ''
+                                }
+                              />
+                            </Button>
+                          </TableCell>
+                          <TableCell className=''>
+                            <div className='flex justify-end gap-2'>
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      formik.setValues({
+                                        ...formik.values,
+                                        id: todo.id,
+                                        title: todo.title,
+                                        description: todo.description || '',
+                                        action: 'update',
+                                        open: true
+                                      })
+                                    }
+                                  >
+                                    <IconEdit />
+                                  </Button>
+                                }
+                                content={'Edit'}
+                              />
 
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: 'Delete Todo',
-                                      description:
-                                        'Are you sure you want to delete this todo? This action cannot be undone.',
-                                      cancelText: 'Cancel',
-                                      confirmText: 'Delete',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            deleteTodo(todo.id)
-                                          );
-                                          if (
-                                            deleteTodo.fulfilled.match(result)
-                                          ) {
-                                            toast.success(
-                                              'Todo deleted successfully!'
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: 'Delete Todo',
+                                        description:
+                                          'Are you sure you want to delete this todo? This action cannot be undone.',
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Delete',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              deleteTodo(todo.id)
                                             );
-                                            dispatch(fetchTodos());
-                                          } else if (
-                                            deleteTodo.rejected.match(result)
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to delete todo';
-                                            toast.error(errorMessage);
+                                            if (
+                                              deleteTodo.fulfilled.match(result)
+                                            ) {
+                                              toast.success(
+                                                'Todo deleted successfully!'
+                                              );
+                                              dispatch(fetchTodos());
+                                            } else if (
+                                              deleteTodo.rejected.match(result)
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to delete todo';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Delete todo error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Delete todo error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconTrash />
-                                </Button>
-                              }
-                              content={'Delete'}
-                            />
-                          </div>
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconTrash />
+                                  </Button>
+                                }
+                                content={'Delete'}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={4}
+                          className='text-muted-foreground py-8 text-center'
+                        >
+                          No todos found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

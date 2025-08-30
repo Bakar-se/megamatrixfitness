@@ -36,12 +36,25 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
-import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPlus,
+  IconPower,
+  IconTrash,
+  IconDownload
+} from '@tabler/icons-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import MultiSelectWithCheckbox from '@/components/shared/MultiSelectWithCheckbox';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
 import { OwnerOrHigher, SuperAdminOnly } from '@/components/permission-guard';
+import { exportTableToCSV, exportTableToExcel } from '@/lib/export-utils';
 
 const Page = () => {
   const { data: session, status }: any = useSession();
@@ -194,18 +207,67 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Subscriptions</h3>
-          <Button
-            onClick={() => {
-              formik.setValues({
-                ...formik.values,
-                action: 'create',
-                open: true
-              });
-            }}
-          >
-            <IconPlus className='mr-2 h-4 w-4' />
-            New Subscription
-          </Button>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  disabled={
+                    loading ||
+                    !data.subscriptions ||
+                    data.subscriptions.length === 0
+                  }
+                >
+                  <IconDownload className='mr-2 h-4 w-4' />
+                  Download as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToCSV(table, 'subscriptions.csv');
+                    }
+                  }}
+                  disabled={
+                    loading ||
+                    !data.subscriptions ||
+                    data.subscriptions.length === 0
+                  }
+                >
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToExcel(table, 'subscriptions');
+                    }
+                  }}
+                  disabled={
+                    loading ||
+                    !data.subscriptions ||
+                    data.subscriptions.length === 0
+                  }
+                >
+                  XLSX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                formik.setValues({
+                  ...formik.values,
+                  action: 'create',
+                  open: true
+                });
+              }}
+            >
+              <IconPlus className='mr-2 h-4 w-4' />
+              New Subscription
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent>
@@ -229,211 +291,226 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.subscriptions.map((row: Subscription) => (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell className=''>
-                          <div className='flex flex-col gap-2'>
-                            <Badge
-                              variant={row.is_active ? 'default' : 'outline'}
-                              className={
-                                row.is_active
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'text-destructive'
-                              }
-                            >
-                              {row.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className=''>{row.monthly_price}</TableCell>
-                        <TableCell className=''>{row.yearly_price}</TableCell>
-                        <TableCell className=''>{row.max_gyms}</TableCell>
-                        <TableCell className=''>{row.max_members}</TableCell>
-                        <TableCell className=''>{row.max_equipment}</TableCell>
-                        <TableCell></TableCell>
-                        <TableCell className=''>
-                          <div className='flex justify-end gap-2'>
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    formik.setValues({
-                                      ...formik.values,
-                                      ...row,
-                                      action: 'view',
-                                      open: true
-                                    } as any)
-                                  }
-                                >
-                                  <IconEdit />
-                                </Button>
-                              }
-                              content={'Edit'}
-                            />
-
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: row.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      description: row.is_active
-                                        ? 'Are you sure you want to deactivate this subscription?'
-                                        : 'Are you sure you want to activate this subscription?',
-                                      cancelText: 'Cancel',
-                                      confirmText: row.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            toggleSubscriptionStatus({
-                                              id: row.id,
-                                              status: !row.is_active
-                                            })
-                                          );
-                                          if (
-                                            toggleSubscriptionStatus.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
-                                            );
-                                          } else if (
-                                            toggleSubscriptionStatus.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to update subscription status';
-                                            toast.error(errorMessage);
-                                          }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Toggle status error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconPower
-                                    className={
-                                      row.is_active
-                                        ? 'text-primary'
-                                        : 'text-destructive'
+                    {data.subscriptions && data.subscriptions.length > 0 ? (
+                      data.subscriptions.map((row: Subscription) => (
+                        <TableRow key={row.id}>
+                          <TableCell>{row.name}</TableCell>
+                          <TableCell className=''>
+                            <div className='flex flex-col gap-2'>
+                              <Badge
+                                variant={row.is_active ? 'default' : 'outline'}
+                                className={
+                                  row.is_active
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {row.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className=''>
+                            {row.monthly_price}
+                          </TableCell>
+                          <TableCell className=''>{row.yearly_price}</TableCell>
+                          <TableCell className=''>{row.max_gyms}</TableCell>
+                          <TableCell className=''>{row.max_members}</TableCell>
+                          <TableCell className=''>
+                            {row.max_equipment}
+                          </TableCell>
+                          <TableCell></TableCell>
+                          <TableCell className=''>
+                            <div className='flex justify-end gap-2'>
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      formik.setValues({
+                                        ...formik.values,
+                                        ...row,
+                                        action: 'view',
+                                        open: true
+                                      } as any)
                                     }
-                                  />
-                                </Button>
-                              }
-                              content={
-                                row.is_active ? 'Deactivate' : 'Activate'
-                              }
-                            />
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: 'Delete Subscription',
-                                      description:
-                                        'Are you sure you want to delete this subscription?',
-                                      cancelText: 'Cancel',
-                                      confirmText: 'Delete',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            deleteSubscription({
-                                              id: row.id
-                                            })
-                                          );
-                                          if (
-                                            deleteSubscription.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              'Subscription deleted successfully!'
+                                  >
+                                    <IconEdit />
+                                  </Button>
+                                }
+                                content={'Edit'}
+                              />
+
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: row.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        description: row.is_active
+                                          ? 'Are you sure you want to deactivate this subscription?'
+                                          : 'Are you sure you want to activate this subscription?',
+                                        cancelText: 'Cancel',
+                                        confirmText: row.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              toggleSubscriptionStatus({
+                                                id: row.id,
+                                                status: !row.is_active
+                                              })
                                             );
-                                          } else if (
-                                            deleteSubscription.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to delete subscription';
-                                            toast.error(errorMessage);
+                                            if (
+                                              toggleSubscriptionStatus.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              );
+                                            } else if (
+                                              toggleSubscriptionStatus.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to update subscription status';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Toggle status error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Delete subscription error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconTrash />
-                                </Button>
-                              }
-                              content={'Delete'}
-                            />
-                          </div>
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconPower
+                                      className={
+                                        row.is_active
+                                          ? 'text-primary'
+                                          : 'text-destructive'
+                                      }
+                                    />
+                                  </Button>
+                                }
+                                content={
+                                  row.is_active ? 'Deactivate' : 'Activate'
+                                }
+                              />
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: 'Delete Subscription',
+                                        description:
+                                          'Are you sure you want to delete this subscription?',
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Delete',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              deleteSubscription({
+                                                id: row.id
+                                              })
+                                            );
+                                            if (
+                                              deleteSubscription.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                'Subscription deleted successfully!'
+                                              );
+                                            } else if (
+                                              deleteSubscription.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to delete subscription';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
+                                            );
+                                            console.error(
+                                              'Delete subscription error:',
+                                              error
+                                            );
+                                          }
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconTrash />
+                                  </Button>
+                                }
+                                content={'Delete'}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={9}
+                          className='text-muted-foreground py-8 text-center'
+                        >
+                          No subscriptions found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

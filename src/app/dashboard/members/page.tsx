@@ -37,11 +37,24 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { CustomTooltip } from '@/components/shared/CustomTooltip';
-import { IconEdit, IconPlus, IconPower, IconTrash } from '@tabler/icons-react';
+import {
+  IconEdit,
+  IconPlus,
+  IconPower,
+  IconTrash,
+  IconDownload
+} from '@tabler/icons-react';
 import PageContainer from '@/components/layout/page-container';
 import Loader from '@/components/shared/Loader';
 import { toast } from 'sonner';
 import { OwnerOnly } from '@/components/permission-guard';
+import { exportTableToCSV, exportTableToExcel } from '@/lib/export-utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 const Page = () => {
   const { data: session, status }: any = useSession();
   const router = useRouter();
@@ -246,24 +259,67 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
       </PageContainer>
     );
   }
-  console.log(formik.errors);
+  console.log('data', data);
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Members</h3>
-          <Button
-            onClick={() => {
-              formik.setValues({
-                ...formik.values,
-                action: 'create',
-                open: true
-              });
-            }}
-          >
-            <IconPlus className='mr-2 h-4 w-4' />
-            New Member
-          </Button>
+          <div className='flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  disabled={
+                    loading || !data.members || data.members.length === 0
+                  }
+                >
+                  <IconDownload className='mr-2 h-4 w-4' />
+                  Download as
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToCSV(table, 'members.csv');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.members || data.members.length === 0
+                  }
+                >
+                  CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const table = document.querySelector('table');
+                    if (table) {
+                      exportTableToExcel(table, 'members');
+                    }
+                  }}
+                  disabled={
+                    loading || !data.members || data.members.length === 0
+                  }
+                >
+                  XLSX
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              onClick={() => {
+                formik.setValues({
+                  ...formik.values,
+                  action: 'create',
+                  open: true
+                });
+              }}
+            >
+              <IconPlus className='mr-2 h-4 w-4' />
+              New Member
+            </Button>
+          </div>
         </div>
         <Card>
           <CardContent>
@@ -287,293 +343,310 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {data.members.map((member) => (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          {member.user.first_name} {member.user.last_name}
-                        </TableCell>
-                        <TableCell className=''>
-                          <div className='flex flex-col gap-2'>
-                            <Badge
-                              variant={
-                                member.user.is_active ? 'default' : 'outline'
-                              }
-                              className={
-                                member.user.is_active
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'text-destructive'
-                              }
-                            >
-                              {member.user.is_active ? 'Active' : 'Inactive'}
-                            </Badge>
-                          </div>
-                        </TableCell>
-                        <TableCell className=''>{member.user.email}</TableCell>
-                        <TableCell className=''>
-                          +{member.user.phone_number}
-                        </TableCell>
-                        <TableCell className=''>
-                          {new Date(member.joinedAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          {member.memberShipFees &&
-                          member.memberShipFees.length > 0 ? (
-                            <Badge
-                              variant={
-                                member.memberShipFees[0].is_active
-                                  ? 'default'
-                                  : 'outline'
-                              }
-                              className={
-                                member.memberShipFees[0].is_active
-                                  ? 'bg-primary/10 text-primary'
-                                  : 'text-destructive'
-                              }
-                            >
-                              {member.memberShipFees[0].is_active
-                                ? 'Active'
-                                : 'Inactive'}
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant='outline'
-                              className='text-muted-foreground'
-                            >
-                              No Membership
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {member.memberShipFees &&
-                          member.memberShipFees.length > 0
-                            ? new Date(
-                                member.memberShipFees[0].end_date
-                              ).toLocaleDateString()
-                            : '-'}
-                        </TableCell>
-                        <TableCell className=''>
-                          <div className='flex justify-end gap-2'>
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() => {
-                                    const membershipFee =
-                                      member.memberShipFees &&
-                                      member.memberShipFees.length > 0
-                                        ? member.memberShipFees[0]
-                                        : null;
+                    {data.members && data.members.length > 0 ? (
+                      data.members.map((member: any) => (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            {member.user.first_name} {member.user.last_name}
+                          </TableCell>
+                          <TableCell className=''>
+                            <div className='flex flex-col gap-2'>
+                              <Badge
+                                variant={
+                                  member.user.is_active ? 'default' : 'outline'
+                                }
+                                className={
+                                  member.user.is_active
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {member.user.is_active ? 'Active' : 'Inactive'}
+                              </Badge>
+                            </div>
+                          </TableCell>
+                          <TableCell className=''>
+                            {member.user.email}
+                          </TableCell>
+                          <TableCell className=''>
+                            +{member.user.phone_number}
+                          </TableCell>
+                          <TableCell className=''>
+                            {new Date(member.joinedAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {member.membership_fee &&
+                            member.membership_fee.length > 0 ? (
+                              <Badge
+                                variant={
+                                  member.membership_fee[0].is_active
+                                    ? 'default'
+                                    : 'outline'
+                                }
+                                className={
+                                  member.membership_fee[0].is_active
+                                    ? 'bg-primary/10 text-primary'
+                                    : 'text-destructive'
+                                }
+                              >
+                                {member.membership_fee[0].is_active
+                                  ? 'Active'
+                                  : 'Inactive'}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant='outline'
+                                className='text-muted-foreground'
+                              >
+                                No Membership
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {member.membership_fee &&
+                            member.membership_fee.length > 0
+                              ? new Date(
+                                  member.membership_fee[0].end_date
+                                ).toLocaleDateString()
+                              : '-'}
+                          </TableCell>
+                          <TableCell className=''>
+                            <div className='flex justify-end gap-2'>
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() => {
+                                      const membershipFee =
+                                        member.membership_fee &&
+                                        member.membership_fee.length > 0
+                                          ? member.membership_fee[0]
+                                          : null;
 
-                                    formik.setValues({
-                                      ...formik.values,
-                                      id: member.id,
-                                      user_id: member.user_id,
-                                      first_name: member.user.first_name,
-                                      last_name: member.user.last_name,
-                                      email: member.user.email,
-                                      phone_number: member.user.phone_number,
-                                      address: member.user.address,
-                                      city: member.user.city,
-                                      state: member.user.state,
-                                      zip_code: member.user.zip_code,
-                                      country: member.user.country,
-                                      date_of_birth: member.user.date_of_birth
-                                        ? new Date(member.user.date_of_birth)
-                                            .toISOString()
-                                            .split('T')[0]
-                                        : '',
-                                      // Membership fee fields
-                                      membership_price: membershipFee
-                                        ? membershipFee.price.toString()
-                                        : '',
-                                      membership_start_date: membershipFee
-                                        ? new Date(membershipFee.start_date)
-                                            .toISOString()
-                                            .split('T')[0]
-                                        : '',
-                                      membership_end_date: membershipFee
-                                        ? new Date(membershipFee.end_date)
-                                            .toISOString()
-                                            .split('T')[0]
-                                        : '',
-                                      membership_months: '',
-                                      membership_end_date_type: 'months',
-                                      action: 'update',
-                                      open: true
-                                    });
-                                  }}
-                                >
-                                  <IconEdit />
-                                </Button>
-                              }
-                              content={'Edit'}
-                            />
+                                      formik.setValues({
+                                        ...formik.values,
+                                        id: member.id,
+                                        user_id: member.user_id,
+                                        first_name: member.user.first_name,
+                                        last_name: member.user.last_name,
+                                        email: member.user.email,
+                                        phone_number: member.user.phone_number,
+                                        address: member.user.address,
+                                        city: member.user.city,
+                                        state: member.user.state,
+                                        zip_code: member.user.zip_code,
+                                        country: member.user.country,
+                                        date_of_birth: member.user.date_of_birth
+                                          ? new Date(member.user.date_of_birth)
+                                              .toISOString()
+                                              .split('T')[0]
+                                          : '',
+                                        // Membership fee fields
+                                        membership_price: membershipFee
+                                          ? membershipFee.price.toString()
+                                          : '',
+                                        membership_start_date: membershipFee
+                                          ? new Date(membershipFee.start_date)
+                                              .toISOString()
+                                              .split('T')[0]
+                                          : '',
+                                        membership_end_date: membershipFee
+                                          ? new Date(membershipFee.end_date)
+                                              .toISOString()
+                                              .split('T')[0]
+                                          : '',
+                                        membership_months: '',
+                                        membership_end_date_type: 'months',
+                                        action: 'update',
+                                        open: true
+                                      });
+                                    }}
+                                  >
+                                    <IconEdit />
+                                  </Button>
+                                }
+                                content={'Edit'}
+                              />
 
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: member.user.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      description: member.user.is_active
-                                        ? 'Are you sure you want to deactivate this member?'
-                                        : 'Are you sure you want to activate this member?',
-                                      cancelText: 'Cancel',
-                                      confirmText: member.user.is_active
-                                        ? 'Deactivate'
-                                        : 'Activate',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            toggleMemberStatus({
-                                              id: member.id,
-                                              status: !member.user.is_active
-                                            })
-                                          );
-                                          if (
-                                            toggleMemberStatus.fulfilled.match(
-                                              result
-                                            )
-                                          ) {
-                                            toast.success(
-                                              `Member ${!member.user.is_active ? 'activated' : 'deactivated'} successfully!`
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: member.user.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        description: member.user.is_active
+                                          ? 'Are you sure you want to deactivate this member?'
+                                          : 'Are you sure you want to activate this member?',
+                                        cancelText: 'Cancel',
+                                        confirmText: member.user.is_active
+                                          ? 'Deactivate'
+                                          : 'Activate',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              toggleMemberStatus({
+                                                id: member.id,
+                                                status: !member.user.is_active
+                                              })
                                             );
-                                            // Refresh the members list
-                                            dispatch(
-                                              fetchMembers(selectedGymId)
+                                            if (
+                                              toggleMemberStatus.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                `Member ${!member.user.is_active ? 'activated' : 'deactivated'} successfully!`
+                                              );
+                                              // Refresh the members list
+                                              dispatch(
+                                                fetchMembers(selectedGymId)
+                                              );
+                                            } else if (
+                                              toggleMemberStatus.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to update member status';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
                                             );
-                                          } else if (
-                                            toggleMemberStatus.rejected.match(
-                                              result
-                                            )
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to update member status';
-                                            toast.error(errorMessage);
+                                            console.error(
+                                              'Toggle status error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Toggle status error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconPower
-                                    className={
-                                      member.user.is_active
-                                        ? 'text-primary'
-                                        : 'text-destructive'
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
                                     }
-                                  />
-                                </Button>
-                              }
-                              content={
-                                member.user.is_active
-                                  ? 'Deactivate'
-                                  : 'Activate'
-                              }
-                            />
-                            <CustomTooltip
-                              trigger={
-                                <Button
-                                  variant='outline'
-                                  size='icon'
-                                  onClick={() =>
-                                    setAlertState({
-                                      open: true,
-                                      title: 'Delete Member',
-                                      description:
-                                        'Are you sure you want to delete this member? This action cannot be undone.',
-                                      cancelText: 'Cancel',
-                                      confirmText: 'Delete',
-                                      onConfirm: async () => {
-                                        try {
-                                          const result = await dispatch(
-                                            deleteMember(member.id)
-                                          );
-                                          if (
-                                            deleteMember.fulfilled.match(result)
-                                          ) {
-                                            toast.success(
-                                              'Member deleted successfully!'
+                                  >
+                                    <IconPower
+                                      className={
+                                        member.user.is_active
+                                          ? 'text-primary'
+                                          : 'text-destructive'
+                                      }
+                                    />
+                                  </Button>
+                                }
+                                content={
+                                  member.user.is_active
+                                    ? 'Deactivate'
+                                    : 'Activate'
+                                }
+                              />
+                              <CustomTooltip
+                                trigger={
+                                  <Button
+                                    variant='outline'
+                                    size='icon'
+                                    onClick={() =>
+                                      setAlertState({
+                                        open: true,
+                                        title: 'Delete Member',
+                                        description:
+                                          'Are you sure you want to delete this member? This action cannot be undone.',
+                                        cancelText: 'Cancel',
+                                        confirmText: 'Delete',
+                                        onConfirm: async () => {
+                                          try {
+                                            const result = await dispatch(
+                                              deleteMember(member.id)
                                             );
-                                            // Refresh the members list
-                                            dispatch(
-                                              fetchMembers(selectedGymId)
+                                            if (
+                                              deleteMember.fulfilled.match(
+                                                result
+                                              )
+                                            ) {
+                                              toast.success(
+                                                'Member deleted successfully!'
+                                              );
+                                              // Refresh the members list
+                                              dispatch(
+                                                fetchMembers(selectedGymId)
+                                              );
+                                            } else if (
+                                              deleteMember.rejected.match(
+                                                result
+                                              )
+                                            ) {
+                                              const errorMessage =
+                                                result.payload &&
+                                                typeof result.payload ===
+                                                  'object' &&
+                                                'message' in result.payload
+                                                  ? (
+                                                      result.payload as {
+                                                        message: string;
+                                                      }
+                                                    ).message
+                                                  : 'Failed to delete member';
+                                              toast.error(errorMessage);
+                                            }
+                                          } catch (error) {
+                                            toast.error(
+                                              'An unexpected error occurred'
                                             );
-                                          } else if (
-                                            deleteMember.rejected.match(result)
-                                          ) {
-                                            const errorMessage =
-                                              result.payload &&
-                                              typeof result.payload ===
-                                                'object' &&
-                                              'message' in result.payload
-                                                ? (
-                                                    result.payload as {
-                                                      message: string;
-                                                    }
-                                                  ).message
-                                                : 'Failed to delete member';
-                                            toast.error(errorMessage);
+                                            console.error(
+                                              'Delete member error:',
+                                              error
+                                            );
                                           }
-                                        } catch (error) {
-                                          toast.error(
-                                            'An unexpected error occurred'
-                                          );
-                                          console.error(
-                                            'Delete member error:',
-                                            error
-                                          );
-                                        }
-                                      },
-                                      onClose: () => {
-                                        setAlertState({
-                                          ...alertState,
-                                          open: false
-                                        });
-                                      },
-                                      type: 'danger'
-                                    })
-                                  }
-                                >
-                                  <IconTrash />
-                                </Button>
-                              }
-                              content={'Delete'}
-                            />
-                          </div>
+                                        },
+                                        onClose: () => {
+                                          setAlertState({
+                                            ...alertState,
+                                            open: false
+                                          });
+                                        },
+                                        type: 'danger'
+                                      })
+                                    }
+                                  >
+                                    <IconTrash />
+                                  </Button>
+                                }
+                                content={'Delete'}
+                              />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          className='text-muted-foreground py-8 text-center'
+                        >
+                          No members found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </div>

@@ -119,9 +119,11 @@ export default function AppSidebar() {
         {userRole === 'OWNER' && !isLoadingGyms && gyms.length > 0 && (
           <OrgSwitcher
             tenants={gyms}
-            defaultTenant={gyms.find(
-              (gym) => gym.id === session?.user?.selected_location_id
-            )}
+            defaultTenant={
+              gyms.find(
+                (gym) => gym.id === session?.user?.selected_location_id
+              ) || gyms[0]
+            } // Fallback to first gym if no location is selected
             onTenantSwitch={(gymId) => console.log('Switching to gym:', gymId)}
           />
         )}
