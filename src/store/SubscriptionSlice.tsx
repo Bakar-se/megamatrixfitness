@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { Feature, Subscription } from '@/types/schema';
+import { toast } from 'sonner';
 interface InitialStateType {
   data: {
     subscriptions: Subscription[];
@@ -57,6 +58,9 @@ export const updateSubscription = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to update subscription'
+      );
       return rejectWithValue(error);
     }
   }
@@ -74,6 +78,9 @@ export const addSubscription = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to add subscription'
+      );
       return rejectWithValue(error);
     }
   }
@@ -93,6 +100,9 @@ export const deleteSubscription = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to delete subscription'
+      );
       return rejectWithValue(error);
     }
   }
@@ -113,6 +123,9 @@ export const toggleSubscriptionStatus = createAsyncThunk(
       );
       return { id: params.id, status: params.status };
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to toggle subscription status'
+      );
       return rejectWithValue(error);
     }
   }
