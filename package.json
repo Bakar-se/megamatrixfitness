@@ -8,9 +8,9 @@
   },
   "postinstall": "npx prisma generate && npx prisma db seed",
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "npx prisma generate && npx prisma db seed && next build",
-    "start": "next start",
+    "dev": "node init && next dev --turbopack",
+    "build": "node init && npx prisma generate && npx prisma db seed && next build",
+    "start": "node init && next start",
     "lint": "next lint",
     "lint:fix": "eslint src --fix && npm run format",
     "lint:strict": "eslint --max-warnings=0 src",

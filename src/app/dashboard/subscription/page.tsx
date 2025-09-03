@@ -129,77 +129,45 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      try {
-        if (values.action === 'create') {
-          const result = await dispatch(
-            addSubscription({
-              subscription: {
-                ...values
-              } as any
-            })
-          );
-          if (addSubscription.fulfilled.match(result)) {
-            toast.success('Subscription added successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.values,
-              open: false
-            });
-          } else if (addSubscription.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to add subscription';
-            toast.error(errorMessage);
-          }
-        } else {
-          const result = await dispatch(
-            updateSubscription({
-              subscription: {
-                ...values
-              } as any
-            })
-          );
-          if (updateSubscription.fulfilled.match(result)) {
-            toast.success('Subscription updated successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.values,
-              open: false
-            });
-          } else if (updateSubscription.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update subscription';
-            toast.error(errorMessage);
-          }
+      if (values.action === 'create') {
+        const result = await dispatch(
+          addSubscription({
+            subscription: {
+              ...values
+            } as any
+          })
+        );
+        if (addSubscription.fulfilled.match(result)) {
+          toast.success('Subscription added successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.values,
+            open: false
+          });
         }
-      } catch (error) {
-        toast.error('An unexpected error occurred');
-        console.error('Form submission error:', error);
+      } else {
+        const result = await dispatch(
+          updateSubscription({
+            subscription: {
+              ...values
+            } as any
+          })
+        );
+        if (updateSubscription.fulfilled.match(result)) {
+          toast.success('Subscription updated successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.values,
+            open: false
+          });
+        }
       }
     }
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchSubscriptions()),
-          dispatch(fetchFeatures())
-        ]);
-      } catch (error) {
-        toast.error('Failed to fetch data');
-        console.error('Data fetching error:', error);
-      }
-    };
-
-    fetchData();
+    dispatch(fetchSubscriptions());
+    dispatch(fetchFeatures());
   }, [dispatch]);
 
   return (
@@ -360,46 +328,19 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                           ? 'Deactivate'
                                           : 'Activate',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              toggleSubscriptionStatus({
-                                                id: row.id,
-                                                status: !row.is_active
-                                              })
-                                            );
-                                            if (
-                                              toggleSubscriptionStatus.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
-                                              );
-                                            } else if (
-                                              toggleSubscriptionStatus.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to update subscription status';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Toggle status error:',
-                                              error
+                                          const result = await dispatch(
+                                            toggleSubscriptionStatus({
+                                              id: row.id,
+                                              status: !row.is_active
+                                            })
+                                          );
+                                          if (
+                                            toggleSubscriptionStatus.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              `Subscription ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
                                             );
                                           }
                                         },
@@ -440,45 +381,18 @@ const SubscriptionListing: React.FC<StagesTabProps> = ({ session }) => {
                                         cancelText: 'Cancel',
                                         confirmText: 'Delete',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              deleteSubscription({
-                                                id: row.id
-                                              })
-                                            );
-                                            if (
-                                              deleteSubscription.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                'Subscription deleted successfully!'
-                                              );
-                                            } else if (
-                                              deleteSubscription.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to delete subscription';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Delete subscription error:',
-                                              error
+                                          const result = await dispatch(
+                                            deleteSubscription({
+                                              id: row.id
+                                            })
+                                          );
+                                          if (
+                                            deleteSubscription.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              'Subscription deleted successfully!'
                                             );
                                           }
                                         },

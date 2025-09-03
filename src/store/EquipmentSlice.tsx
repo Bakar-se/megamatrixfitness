@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // Equipment types enum
 export enum EquipmentType {
@@ -72,6 +73,7 @@ export const fetchEquipment = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to fetch equipment');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch equipment'
       );
@@ -89,6 +91,7 @@ export const addEquipment = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add equipment');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to add equipment'
       );
@@ -106,6 +109,9 @@ export const updateEquipment = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to update equipment'
+      );
       return rejectWithValue(
         error.response?.data?.message || 'Failed to update equipment'
       );
@@ -122,6 +128,9 @@ export const deleteEquipment = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to delete equipment'
+      );
       return rejectWithValue(
         error.response?.data?.message || 'Failed to delete equipment'
       );
@@ -142,6 +151,9 @@ export const toggleEquipmentStatus = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to toggle equipment status'
+      );
       return rejectWithValue(
         error.response?.data?.message || 'Failed to toggle equipment status'
       );

@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // Types
 export interface MemberShipFee {
@@ -119,6 +120,7 @@ export const fetchMembers = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to fetch members');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch members'
       );
@@ -133,6 +135,7 @@ export const addMember = createAsyncThunk(
       const response = await axios.post('/api/members/addmember', memberData);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add member');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to add member'
       );
@@ -150,6 +153,7 @@ export const updateMember = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update member');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to update member'
       );
@@ -166,6 +170,7 @@ export const deleteMember = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete member');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to delete member'
       );
@@ -186,6 +191,9 @@ export const toggleMemberStatus = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to toggle member status'
+      );
       return rejectWithValue(
         error.response?.data?.message || 'Failed to toggle member status'
       );

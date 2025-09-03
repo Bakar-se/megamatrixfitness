@@ -15,23 +15,20 @@ export default async function handler(
       method: 'POST'
     });
 
-    if (!session || !session.user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+    if (!session) return;
+    if (!session.user.selected_location_id) {
+      return res.status(400).json({ message: 'Gym ID is required' });
     }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
+    const totalEquipment = await prisma.equipment.count({
+      where: {
+        gym_id: session.user.selected_location_id,
+        is_deleted: false
+      }
     });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Only owners can add equipment
-    if (user.role !== 'OWNER') {
+    if (totalEquipment >= session.user.max_equipment) {
       return res
-        .status(403)
-        .json({ message: 'Access denied. Only owners can add equipment.' });
+        .status(400)
+        .json({ message: 'You have reached the maximum number of equipment' });
     }
 
     const { name, type, quantity, weight, gym_id } = req.body;
@@ -47,7 +44,7 @@ export default async function handler(
     const gym = await prisma.gym.findFirst({
       where: {
         id: gym_id,
-        owner_id: user.id,
+        owner_id: session.user.id,
         is_deleted: false
       }
     });
