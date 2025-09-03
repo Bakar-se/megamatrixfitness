@@ -135,71 +135,51 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
     validateOnChange: true,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      try {
-        // Manual validation check
-        const errors = await formik.validateForm();
-        if (Object.keys(errors).length > 0) {
-          toast.error('Please fix the form errors before submitting');
-          return;
-        }
+      // Manual validation check
+      const errors = await formik.validateForm();
+      if (Object.keys(errors).length > 0) {
+        toast.error('Please fix the form errors before submitting');
+        return;
+      }
 
-        if (!selectedGymId) {
-          toast.error('Please select a gym first');
-          return;
-        }
+      if (!selectedGymId) {
+        toast.error('Please select a gym first');
+        return;
+      }
 
-        if (values.action === 'create') {
-          const result = await dispatch(
-            addEquipment({
-              ...values,
-              gym_id: selectedGymId
-            })
-          );
-          if (addEquipment.fulfilled.match(result)) {
-            toast.success('Equipment added successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.initialValues,
-              open: false
-            });
-            // Refresh the equipment list
-            dispatch(fetchEquipment(selectedGymId));
-          } else if (addEquipment.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to add equipment';
-            toast.error(errorMessage);
-          }
-        } else {
-          const result = await dispatch(
-            updateEquipment({
-              ...values
-            })
-          );
-          if (updateEquipment.fulfilled.match(result)) {
-            toast.success('Equipment updated successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.initialValues,
-              open: false
-            });
-            // Refresh the equipment list
-            dispatch(fetchEquipment(selectedGymId));
-          } else if (updateEquipment.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update equipment';
-            toast.error(errorMessage);
-          }
+      if (values.action === 'create') {
+        const result = await dispatch(
+          addEquipment({
+            ...values,
+            gym_id: selectedGymId
+          })
+        );
+        if (addEquipment.fulfilled.match(result)) {
+          toast.success('Equipment added successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.initialValues,
+            open: false
+          });
+          // Refresh the equipment list
+          dispatch(fetchEquipment(selectedGymId));
         }
-      } catch (error) {
-        toast.error('An unexpected error occurred');
+      } else {
+        const result = await dispatch(
+          updateEquipment({
+            ...values
+          })
+        );
+        if (updateEquipment.fulfilled.match(result)) {
+          toast.success('Equipment updated successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.initialValues,
+            open: false
+          });
+          // Refresh the equipment list
+          dispatch(fetchEquipment(selectedGymId));
+        }
       }
     }
   });
@@ -386,50 +366,23 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
                                           ? 'Deactivate'
                                           : 'Activate',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              toggleEquipmentStatus({
-                                                id: equipment.id,
-                                                status: !equipment.is_active
-                                              })
+                                          const result = await dispatch(
+                                            toggleEquipmentStatus({
+                                              id: equipment.id,
+                                              status: !equipment.is_active
+                                            })
+                                          );
+                                          if (
+                                            toggleEquipmentStatus.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              `Equipment ${!equipment.is_active ? 'activated' : 'deactivated'} successfully!`
                                             );
-                                            if (
-                                              toggleEquipmentStatus.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                `Equipment ${!equipment.is_active ? 'activated' : 'deactivated'} successfully!`
-                                              );
-                                              // Refresh the equipment list
-                                              dispatch(
-                                                fetchEquipment(selectedGymId)
-                                              );
-                                            } else if (
-                                              toggleEquipmentStatus.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to update equipment status';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Toggle status error:',
-                                              error
+                                            // Refresh the equipment list
+                                            dispatch(
+                                              fetchEquipment(selectedGymId)
                                             );
                                           }
                                         },
@@ -472,47 +425,20 @@ const EquipmentListing: React.FC<EquipmentListingProps> = ({ session }) => {
                                         cancelText: 'Cancel',
                                         confirmText: 'Delete',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              deleteEquipment(equipment.id)
+                                          const result = await dispatch(
+                                            deleteEquipment(equipment.id)
+                                          );
+                                          if (
+                                            deleteEquipment.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              'Equipment deleted successfully!'
                                             );
-                                            if (
-                                              deleteEquipment.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                'Equipment deleted successfully!'
-                                              );
-                                              // Refresh the equipment list
-                                              dispatch(
-                                                fetchEquipment(selectedGymId)
-                                              );
-                                            } else if (
-                                              deleteEquipment.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to delete equipment';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Delete equipment error:',
-                                              error
+                                            // Refresh the equipment list
+                                            dispatch(
+                                              fetchEquipment(selectedGymId)
                                             );
                                           }
                                         },

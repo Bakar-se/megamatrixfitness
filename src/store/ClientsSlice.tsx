@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { Subscription, User } from '@/types/schema';
+import { toast } from 'sonner';
 interface InitialStateType {
   data: {
     clients: User[];
@@ -36,6 +37,7 @@ export const updateClient = createAsyncThunk(
       const response = await axios.post('/api/clients/updateclient', client);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update client');
       return rejectWithValue(error);
     }
   }
@@ -47,6 +49,7 @@ export const addClient = createAsyncThunk(
       const response = await axios.post('/api/clients/addclient', client);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add client');
       return rejectWithValue(error);
     }
   }
@@ -63,6 +66,7 @@ export const deleteClient = createAsyncThunk(
       const response = await axios.post('/api/clients/deleteclient', params);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete client');
       return rejectWithValue(error);
     }
   }
@@ -83,6 +87,9 @@ export const toggleClientStatus = createAsyncThunk(
       );
       return { id: params.id, status: params.status };
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to toggle client status'
+      );
       return rejectWithValue(error);
     }
   }

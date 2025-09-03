@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Gym } from '@/types/schema';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 interface GymsState {
   data: {
@@ -31,6 +32,7 @@ export const fetchGyms = createAsyncThunk(
       const response = await axios.get('/api/gyms/fetchgyms');
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to fetch gyms');
       return rejectWithValue({
         message:
           error.response?.data?.message ||
@@ -49,6 +51,7 @@ export const addGym = createAsyncThunk(
       const response = await axios.post('/api/gyms/addgym', gym);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add gym');
       return rejectWithValue({
         message:
           error.response?.data?.message || error.message || 'Failed to add gym'
@@ -65,6 +68,7 @@ export const updateGym = createAsyncThunk(
       const response = await axios.post('/api/gyms/updategym', gym);
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update gym');
       return rejectWithValue({
         message:
           error.response?.data?.message ||
@@ -86,6 +90,7 @@ export const deleteGym = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete gym');
       return rejectWithValue({
         message:
           error.response?.data?.message ||
@@ -110,6 +115,9 @@ export const toggleGymStatus = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
+      toast.error(
+        error.response?.data?.message || 'Failed to toggle gym status'
+      );
       return rejectWithValue({
         message:
           error.response?.data?.message ||

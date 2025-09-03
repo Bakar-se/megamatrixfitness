@@ -62,13 +62,6 @@ export default async function handler(
     // Use transaction to soft delete both member and user
     const result = await prisma.$transaction(async (tx: any) => {
       // Soft delete the member
-      const deletedMember = await tx.member.update({
-        where: { id: id },
-        data: {
-          // You might want to add a deleted_at field to your Member model
-          // For now, we'll just delete the record
-        }
-      });
 
       // Soft delete the user
       const deletedUser = await tx.user.update({
@@ -77,13 +70,6 @@ export default async function handler(
           is_deleted: true
         }
       });
-
-      return { member: deletedMember, user: deletedUser };
-    });
-
-    // Delete the member record (since we don't have soft delete for members yet)
-    await prisma.member.delete({
-      where: { id: id }
     });
 
     return res.status(200).json({

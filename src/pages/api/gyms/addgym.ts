@@ -15,24 +15,7 @@ export default async function handler(
       method: 'POST'
     });
 
-    if (!session || !session.user) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id }
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    // Only owners can add gyms
-    if (user.role !== 'OWNER') {
-      return res
-        .status(403)
-        .json({ message: 'Access denied. Only owners can add gyms.' });
-    }
+    if (!session) return;
 
     const { name, address, city, state, zip_code, country, phone_number } =
       req.body;
@@ -40,7 +23,17 @@ export default async function handler(
     if (!name) {
       return res.status(400).json({ message: 'Gym name is required' });
     }
-
+    const totalGyms = await prisma.gym.count({
+      where: {
+        owner_id: session.user.id,
+        is_deleted: false
+      }
+    });
+    if (totalGyms >= session.user.max_gyms) {
+      return res
+        .status(400)
+        .json({ message: 'You have reached the maximum number of gyms' });
+    }
     const gym = await prisma.gym.create({
       data: {
         name,
@@ -50,7 +43,7 @@ export default async function handler(
         zip_code,
         country,
         phone_number,
-        owner_id: user.id
+        owner_id: session.user.id
       }
     });
 
