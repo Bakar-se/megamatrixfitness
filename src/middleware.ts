@@ -8,6 +8,12 @@ export default withAuth(
     const token = req.nextauth.token;
     const { pathname } = req.nextUrl;
 
+    // Allow root path to pass through without authentication
+    if (pathname === '/') {
+      console.log(`Middleware: Allowing access to root path ${pathname}`);
+      return NextResponse.next();
+    }
+
     // If no token, redirect to signin
     if (!token) {
       console.log(
@@ -44,8 +50,10 @@ export default withAuth(
 // Configure which routes to protect - be more specific
 export const config = {
   matcher: [
-    // Protect dashboard routes
+    // Only protect dashboard routes and other specific protected paths
     '/dashboard/:path*',
-    '/((?!api|_next/static|_next/image|favicon.ico|public|auth).*)'
+    '/unauthorized',
+    '/profile',
+    '/settings'
   ]
 };
