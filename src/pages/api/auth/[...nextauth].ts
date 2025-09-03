@@ -36,7 +36,9 @@ export const options: NextAuthOptions = {
 
           const dbUser: any = await prisma.user.findFirst({
             where: {
-              email
+              email,
+              is_deleted: false,
+              is_active: true
             }
           });
           if (!dbUser) {
@@ -92,13 +94,26 @@ export const options: NextAuthOptions = {
       return token;
     },
     session: async ({ session, token }: any) => {
+      const userData = await prisma.user.findUnique({
+        where: {
+          id: token.sub,
+          is_deleted: false,
+          is_active: true
+        },
+        include: {
+          subscription: true
+        }
+      });
       // Add role and other user data to session
-      if (token) {
-        session.user.id = token.sub;
-        session.user.role = token.role;
-        session.user.first_name = token.first_name;
-        session.user.last_name = token.last_name;
+      if (userData) {
+        session.user.id = userData.id;
+        session.user.role = userData.role;
+        session.user.first_name = userData.first_name;
+        session.user.last_name = userData.last_name;
         session.user.selected_location_id = token.selected_location_id;
+        session.user.max_gyms = userData.subscription?.max_gyms;
+        session.user.max_members = userData.subscription?.max_members;
+        session.user.max_equipment = userData.subscription?.max_equipment;
       }
 
       return session;

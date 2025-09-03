@@ -158,81 +158,61 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
     validateOnBlur: true,
     onSubmit: async (values) => {
       console.log(values);
-      try {
-        if (!session?.user?.selected_location_id) {
-          toast.error('Please select a gym first');
-          return;
-        }
+      if (!session?.user?.selected_location_id) {
+        toast.error('Please select a gym first');
+        return;
+      }
 
-        if (values.action === 'create') {
-          const result = await dispatch(
-            addMember({
-              ...values,
-              gym_id: selectedGymId,
-              // Include membership fee fields if provided
-              ...(values.membership_price && {
-                membership_price: values.membership_price,
-                membership_start_date: values.membership_start_date,
-                membership_end_date: values.membership_end_date,
-                membership_months: values.membership_months,
-                membership_end_date_type: values.membership_end_date_type
-              })
+      if (values.action === 'create') {
+        const result = await dispatch(
+          addMember({
+            ...values,
+            gym_id: selectedGymId,
+            // Include membership fee fields if provided
+            ...(values.membership_price && {
+              membership_price: values.membership_price,
+              membership_start_date: values.membership_start_date,
+              membership_end_date: values.membership_end_date,
+              membership_months: values.membership_months,
+              membership_end_date_type: values.membership_end_date_type
             })
-          );
-          if (addMember.fulfilled.match(result)) {
-            toast.success('Member added successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.initialValues,
-              open: false
-            });
-            // Refresh the members list
-            dispatch(fetchMembers(selectedGymId));
-          } else if (addMember.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to add member';
-            toast.error(errorMessage);
-          }
-        } else {
-          const result = await dispatch(
-            updateMember({
-              ...values,
-              // Include membership fee fields if provided
-              ...(values.membership_price && {
-                membership_price: values.membership_price,
-                membership_start_date: values.membership_start_date,
-                membership_end_date: values.membership_end_date,
-                membership_months: values.membership_months,
-                membership_end_date_type: values.membership_end_date_type
-              })
-            })
-          );
-          if (updateMember.fulfilled.match(result)) {
-            toast.success('Member updated successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.initialValues,
-              open: false
-            });
-            // Refresh the members list
-            dispatch(fetchMembers(selectedGymId));
-          } else if (updateMember.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update member';
-            toast.error(errorMessage);
-          }
+          })
+        );
+        if (addMember.fulfilled.match(result)) {
+          toast.success('Member added successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.initialValues,
+            open: false
+          });
+          // Refresh the members list
+          dispatch(fetchMembers(selectedGymId));
+        } else if (addMember.rejected.match(result)) {
         }
-      } catch (error) {
-        toast.error('An unexpected error occurred');
-        console.error('Form submission error:', error);
+      } else {
+        const result = await dispatch(
+          updateMember({
+            ...values,
+            // Include membership fee fields if provided
+            ...(values.membership_price && {
+              membership_price: values.membership_price,
+              membership_start_date: values.membership_start_date,
+              membership_end_date: values.membership_end_date,
+              membership_months: values.membership_months,
+              membership_end_date_type: values.membership_end_date_type
+            })
+          })
+        );
+        if (updateMember.fulfilled.match(result)) {
+          toast.success('Member updated successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.initialValues,
+            open: false
+          });
+          // Refresh the members list
+          dispatch(fetchMembers(selectedGymId));
+        }
       }
     }
   });
@@ -488,50 +468,23 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                                           ? 'Deactivate'
                                           : 'Activate',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              toggleMemberStatus({
-                                                id: member.id,
-                                                status: !member.user.is_active
-                                              })
+                                          const result = await dispatch(
+                                            toggleMemberStatus({
+                                              id: member.id,
+                                              status: !member.user.is_active
+                                            })
+                                          );
+                                          if (
+                                            toggleMemberStatus.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              `Member ${!member.user.is_active ? 'activated' : 'deactivated'} successfully!`
                                             );
-                                            if (
-                                              toggleMemberStatus.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                `Member ${!member.user.is_active ? 'activated' : 'deactivated'} successfully!`
-                                              );
-                                              // Refresh the members list
-                                              dispatch(
-                                                fetchMembers(selectedGymId)
-                                              );
-                                            } else if (
-                                              toggleMemberStatus.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to update member status';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Toggle status error:',
-                                              error
+                                            // Refresh the members list
+                                            dispatch(
+                                              fetchMembers(selectedGymId)
                                             );
                                           }
                                         },
@@ -574,47 +527,18 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
                                         cancelText: 'Cancel',
                                         confirmText: 'Delete',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              deleteMember(member.id)
+                                          const result = await dispatch(
+                                            deleteMember(member.id)
+                                          );
+                                          if (
+                                            deleteMember.fulfilled.match(result)
+                                          ) {
+                                            toast.success(
+                                              'Member deleted successfully!'
                                             );
-                                            if (
-                                              deleteMember.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                'Member deleted successfully!'
-                                              );
-                                              // Refresh the members list
-                                              dispatch(
-                                                fetchMembers(selectedGymId)
-                                              );
-                                            } else if (
-                                              deleteMember.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to delete member';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Delete member error:',
-                                              error
+                                            // Refresh the members list
+                                            dispatch(
+                                              fetchMembers(selectedGymId)
                                             );
                                           }
                                         },
