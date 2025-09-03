@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 export interface TodoItem {
   id: string;
@@ -46,6 +47,7 @@ export const fetchTodos = createAsyncThunk(
       const res = await axios.get('/api/todo/fetchtodos');
       return res.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to fetch todos');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to fetch todos'
       );
@@ -60,6 +62,7 @@ export const addTodo = createAsyncThunk(
       const res = await axios.post('/api/todo/addtodo', data);
       return res.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to add todo');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to add todo'
       );
@@ -74,6 +77,7 @@ export const updateTodo = createAsyncThunk(
       const res = await axios.post('/api/todo/updatetodo', data);
       return res.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update todo');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to update todo'
       );
@@ -88,6 +92,7 @@ export const deleteTodo = createAsyncThunk(
       const res = await axios.post('/api/todo/deletetodo', { id });
       return res.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete todo');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to delete todo'
       );
@@ -108,6 +113,7 @@ export const toggleTodoCompleted = createAsyncThunk(
       });
       return res.data;
     } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to toggle todo');
       return rejectWithValue(
         error.response?.data?.message || 'Failed to toggle todo'
       );
