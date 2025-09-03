@@ -184,74 +184,48 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      try {
-        if (values.action === 'create') {
-          const result = await dispatch(
-            addClient({
-              client: {
-                ...values
-              } as any
-            })
-          );
-          if (addClient.fulfilled.match(result)) {
-            toast.success('Client added successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.values,
-              open: false
-            });
-          } else if (addClient.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to add client';
-            toast.error(errorMessage);
-          }
-        } else {
-          const result = await dispatch(
-            updateClient({
-              client: {
-                ...values
-              } as any
-            })
-          );
-          if (updateClient.fulfilled.match(result)) {
-            toast.success('Client updated successfully!');
-            formik.resetForm();
-            formik.setValues({
-              ...formik.values,
-              open: false
-            });
-          } else if (updateClient.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update client';
-            toast.error(errorMessage);
-          }
+      if (values.action === 'create') {
+        const result = await dispatch(
+          addClient({
+            client: {
+              ...values
+            } as any
+          })
+        );
+        if (addClient.fulfilled.match(result)) {
+          toast.success('Client added successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.values,
+            open: false
+          });
         }
-      } catch (error) {
-        toast.error('An unexpected error occurred');
-        console.error('Form submission error:', error);
+      } else {
+        const result = await dispatch(
+          updateClient({
+            client: {
+              ...values
+            } as any
+          })
+        );
+        if (updateClient.fulfilled.match(result)) {
+          toast.success('Client updated successfully!');
+          formik.resetForm();
+          formik.setValues({
+            ...formik.values,
+            open: false
+          });
+        }
       }
     }
   });
 
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        await Promise.all([
-          dispatch(fetchClients()),
-          dispatch(fetchSubscriptions())
-        ]);
-      } catch (error) {
-        toast.error('Failed to fetch data');
-        console.error('Data fetching error:', error);
-      }
+      await Promise.all([
+        dispatch(fetchClients()),
+        dispatch(fetchSubscriptions())
+      ]);
     };
 
     fetchData();
@@ -408,46 +382,19 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
                                           ? 'Deactivate'
                                           : 'Activate',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              toggleClientStatus({
-                                                id: row.id,
-                                                status: !row.is_active
-                                              })
-                                            );
-                                            if (
-                                              toggleClientStatus.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                `Client ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
-                                              );
-                                            } else if (
-                                              toggleClientStatus.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to update client status';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Toggle status error:',
-                                              error
+                                          const result = await dispatch(
+                                            toggleClientStatus({
+                                              id: row.id,
+                                              status: !row.is_active
+                                            })
+                                          );
+                                          if (
+                                            toggleClientStatus.fulfilled.match(
+                                              result
+                                            )
+                                          ) {
+                                            toast.success(
+                                              `Client ${!row.is_active ? 'activated' : 'deactivated'} successfully!`
                                             );
                                           }
                                         },
@@ -488,45 +435,16 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
                                         cancelText: 'Cancel',
                                         confirmText: 'Delete',
                                         onConfirm: async () => {
-                                          try {
-                                            const result = await dispatch(
-                                              deleteClient({
-                                                id: row.id
-                                              })
-                                            );
-                                            if (
-                                              deleteClient.fulfilled.match(
-                                                result
-                                              )
-                                            ) {
-                                              toast.success(
-                                                'Client deleted successfully!'
-                                              );
-                                            } else if (
-                                              deleteClient.rejected.match(
-                                                result
-                                              )
-                                            ) {
-                                              const errorMessage =
-                                                result.payload &&
-                                                typeof result.payload ===
-                                                  'object' &&
-                                                'message' in result.payload
-                                                  ? (
-                                                      result.payload as {
-                                                        message: string;
-                                                      }
-                                                    ).message
-                                                  : 'Failed to delete client';
-                                              toast.error(errorMessage);
-                                            }
-                                          } catch (error) {
-                                            toast.error(
-                                              'An unexpected error occurred'
-                                            );
-                                            console.error(
-                                              'Delete client error:',
-                                              error
+                                          const result = await dispatch(
+                                            deleteClient({
+                                              id: row.id
+                                            })
+                                          );
+                                          if (
+                                            deleteClient.fulfilled.match(result)
+                                          ) {
+                                            toast.success(
+                                              'Client deleted successfully!'
                                             );
                                           }
                                         },

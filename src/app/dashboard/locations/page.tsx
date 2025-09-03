@@ -119,79 +119,49 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      try {
-        if (values.action === 'create') {
-          const result = await dispatch(
-            addGym({
-              name: values.name,
-              address: values.address,
-              city: values.city,
-              state: values.state,
-              zip_code: values.zip_code,
-              country: values.country,
-              phone_number: values.phone_number
-            })
-          );
-          if (addGym.fulfilled.match(result)) {
-            toast.success('Location added successfully!');
-            formik.resetForm();
-            setDialogOpen(false);
-            window.location.reload();
-          } else if (addGym.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to add location';
-            toast.error(errorMessage);
-          }
-        } else {
-          const result = await dispatch(
-            updateGym({
-              id: values.id,
-              name: values.name,
-              address: values.address,
-              city: values.city,
-              state: values.state,
-              zip_code: values.zip_code,
-              country: values.country,
-              phone_number: values.phone_number
-            })
-          );
-          if (updateGym.fulfilled.match(result)) {
-            toast.success('Location updated successfully!');
-            formik.resetForm();
-            setDialogOpen(false);
-            window.location.reload();
-          } else if (updateGym.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update location';
-            toast.error(errorMessage);
-          }
+      if (values.action === 'create') {
+        const result = await dispatch(
+          addGym({
+            name: values.name,
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            zip_code: values.zip_code,
+            country: values.country,
+            phone_number: values.phone_number
+          })
+        );
+        if (addGym.fulfilled.match(result)) {
+          toast.success('Location added successfully!');
+          formik.resetForm();
+          setDialogOpen(false);
+          window.location.reload();
         }
-      } catch (error) {
-        toast.error('An unexpected error occurred');
-        console.error('Form submission error:', error);
+      } else {
+        const result = await dispatch(
+          updateGym({
+            id: values.id,
+            name: values.name,
+            address: values.address,
+            city: values.city,
+            state: values.state,
+            zip_code: values.zip_code,
+            country: values.country,
+            phone_number: values.phone_number
+          })
+        );
+        if (updateGym.fulfilled.match(result)) {
+          toast.success('Location updated successfully!');
+          formik.resetForm();
+          setDialogOpen(false);
+          window.location.reload();
+        }
       }
     }
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await dispatch(fetchGyms());
-      } catch (error) {
-        toast.error('Failed to fetch data');
-        console.error('Data fetching error:', error);
-      }
-    };
-
-    fetchData();
+    dispatch(fetchGyms());
   }, [dispatch]);
 
   const handleEdit = (gym: Gym) => {
@@ -217,23 +187,10 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
       cancelText: 'Cancel',
       confirmText: 'Delete',
       onConfirm: async () => {
-        try {
-          const result = await dispatch(deleteGym(gym.id));
-          if (deleteGym.fulfilled.match(result)) {
-            toast.success('Location deleted successfully!');
-            window.location.reload();
-          } else if (deleteGym.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to delete location';
-            toast.error(errorMessage);
-          }
-        } catch (error) {
-          toast.error('An unexpected error occurred');
-          console.error('Delete location error:', error);
+        const result = await dispatch(deleteGym(gym.id));
+        if (deleteGym.fulfilled.match(result)) {
+          toast.success('Location deleted successfully!');
+          window.location.reload();
         }
         setAlertState({ ...alertState, open: false });
       },
@@ -254,29 +211,16 @@ const LocationsListing: React.FC<LocationsTabProps> = ({ session }) => {
       cancelText: 'Cancel',
       confirmText: gym.is_active ? 'Deactivate' : 'Activate',
       onConfirm: async () => {
-        try {
-          const result = await dispatch(
-            toggleGymStatus({
-              id: gym.id,
-              status: !gym.is_active
-            })
+        const result = await dispatch(
+          toggleGymStatus({
+            id: gym.id,
+            status: !gym.is_active
+          })
+        );
+        if (toggleGymStatus.fulfilled.match(result)) {
+          toast.success(
+            `Location ${!gym.is_active ? 'activated' : 'deactivated'} successfully!`
           );
-          if (toggleGymStatus.fulfilled.match(result)) {
-            toast.success(
-              `Location ${!gym.is_active ? 'activated' : 'deactivated'} successfully!`
-            );
-          } else if (toggleGymStatus.rejected.match(result)) {
-            const errorMessage =
-              result.payload &&
-              typeof result.payload === 'object' &&
-              'message' in result.payload
-                ? (result.payload as { message: string }).message
-                : 'Failed to update location status';
-            toast.error(errorMessage);
-          }
-        } catch (error) {
-          toast.error('An unexpected error occurred');
-          console.error('Toggle status error:', error);
         }
         setAlertState({ ...alertState, open: false });
       },
