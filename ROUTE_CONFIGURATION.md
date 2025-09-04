@@ -318,7 +318,6 @@ Enable debug logging in the middleware to see route checking:
 
 ```typescript
 // Add this to middleware for debugging
-
 ```
 
 This route configuration system provides a robust, maintainable way to manage role-based access control throughout your application.
