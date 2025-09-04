@@ -83,7 +83,6 @@ export const updateGym = createAsyncThunk(
 export const deleteGym = createAsyncThunk(
   'gyms/deleteGym',
   async (id: string, { rejectWithValue }) => {
-    console.log(id);
     try {
       const response = await axios.post('/api/gyms/deletegym', {
         id: id

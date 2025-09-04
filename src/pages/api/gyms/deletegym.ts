@@ -35,7 +35,6 @@ export default async function handler(
     }
 
     const { id } = req.body;
-    console.log(id);
     if (!id) {
       return res.status(400).json({ message: 'Gym ID is required' });
     }

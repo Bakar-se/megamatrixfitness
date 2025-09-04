@@ -10,34 +10,21 @@ export default withAuth(
 
     // Allow root path to pass through without authentication
     if (pathname === '/') {
-      console.log(`Middleware: Allowing access to root path ${pathname}`);
       return NextResponse.next();
     }
 
     // If no token, redirect to signin
     if (!token) {
-      console.log(
-        `Middleware: No token found, redirecting to signin from ${pathname}`
-      );
       return NextResponse.redirect(new URL('/auth/signin', req.url));
     }
 
     const userRole = token.role as UserRole;
-    console.log(
-      `Middleware: Checking access for ${pathname} with role ${userRole}`
-    );
 
     // Check if user can access the requested route
     if (!canAccessRoute(userRole, pathname)) {
-      console.log(
-        `Middleware: Access denied for ${pathname} with role ${userRole}`
-      );
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
 
-    console.log(
-      `Middleware: Access granted for ${pathname} with role ${userRole}`
-    );
     return NextResponse.next();
   },
   {

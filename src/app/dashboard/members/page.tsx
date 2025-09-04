@@ -157,7 +157,6 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
     validateOnChange: false,
     validateOnBlur: true,
     onSubmit: async (values) => {
-      console.log(values);
       if (!session?.user?.selected_location_id) {
         toast.error('Please select a gym first');
         return;
@@ -239,7 +238,6 @@ const MemberListing: React.FC<MemberListingProps> = ({ session }) => {
       </PageContainer>
     );
   }
-  console.log('data', data);
   return (
     <PageContainer>
       <div className='w-full space-y-6'>

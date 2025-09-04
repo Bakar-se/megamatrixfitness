@@ -318,8 +318,7 @@ Enable debug logging in the middleware to see route checking:
 
 ```typescript
 // Add this to middleware for debugging
-console.log('Checking route:', pathname, 'for user role:', userRole);
-console.log('Access granted:', canAccessRoute(userRole, pathname));
+
 ```
 
 This route configuration system provides a robust, maintainable way to manage role-based access control throughout your application.
