@@ -11,7 +11,7 @@ export interface RouteConfig {
 export const SUPERADMIN_ROUTES: RouteConfig[] = [
   {
     path: '/dashboard/overview',
-    roles: ['SUPERADMIN'],
+    roles: ['SUPERADMIN', 'OWNER'],
     description: 'Dashboard overview and statistics'
   },
   {

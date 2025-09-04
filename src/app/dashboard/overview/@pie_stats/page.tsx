@@ -1,7 +1,5 @@
-import { delay } from '@/constants/mock-api';
-import { PieGraph } from '@/features/overview/components/pie-graph';
+import { EquipmentDistributionChart } from '@/features/overview/components/equipment-distribution-chart';
 
-export default async function Stats() {
-  await delay(1000);
-  return <PieGraph />;
+export default function Stats() {
+  return <EquipmentDistributionChart />;
 }

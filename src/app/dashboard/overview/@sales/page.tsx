@@ -1,7 +1,5 @@
-import { delay } from '@/constants/mock-api';
-import { RecentSales } from '@/features/overview/components/recent-sales';
+import { RecentMembers } from '@/features/overview/components/recent-members';
 
-export default async function Sales() {
-  await delay(3000);
-  return <RecentSales />;
+export default function Sales() {
+  return <RecentMembers />;
 }

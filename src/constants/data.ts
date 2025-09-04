@@ -20,7 +20,7 @@ export const navItems: NavItem[] = [
     isActive: false,
     shortcut: ['d', 'd'],
     items: [], // Empty array as there are no child items for Dashboard
-    roles: ['SUPERADMIN'] // All roles can access Dashboard
+    roles: ['OWNER'] // All roles can access Dashboard
   },
   {
     title: 'Subscriptions',
