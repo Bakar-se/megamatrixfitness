@@ -11,11 +11,28 @@ import {
 } from '@/components/ui/select';
 import { IconCalendar, IconTrendingUp } from '@tabler/icons-react';
 import axios from 'axios';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
+import { ChartContainer } from '@/components/ui/chart';
 
 type TimeRange = '7d' | '30d' | '90d' | '1y';
 type ChartType = 'line' | 'bar';
+
+const chartConfig = {
+  revenue: {
+    label: 'Revenue',
+    color: 'hsl(var(--chart-1))'
+  }
+};
 
 export function RevenueChart() {
   const [timeRange, setTimeRange] = useState<TimeRange>('30d');
@@ -55,128 +72,30 @@ export function RevenueChart() {
         ).toFixed(1)
       : '0';
 
-  const chartOptions: Highcharts.Options = {
-    chart: {
-      type: chartType === 'line' ? 'line' : 'column',
-      backgroundColor: 'transparent',
-      style: {
-        fontFamily: 'Inter, system-ui, sans-serif'
-      }
-    },
-    title: {
-      text: undefined
-    },
-    xAxis: {
-      categories: data.map((item) => item.date),
-      gridLineColor: '#e5e7eb',
-      lineColor: '#e5e7eb',
-      tickColor: '#e5e7eb',
-      labels: {
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        }
-      }
-    },
-    yAxis: {
-      title: {
-        text: 'Revenue (PKR)',
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        }
-      },
-      gridLineColor: '#f3f4f6',
-      lineColor: '#e5e7eb',
-      labels: {
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        },
-        formatter: function () {
-          return `PKR ${this.value.toLocaleString()}`;
-        }
-      }
-    },
-    series: [
-      {
-        name: 'Revenue',
-        type: chartType === 'line' ? 'line' : 'column',
-        data: data.map((item) => item.revenue),
-        color: {
-          linearGradient: {
-            x1: 0,
-            y1: 0,
-            x2: 0,
-            y2: 1
-          },
-          stops: [
-            [0, '#3b82f6'],
-            [1, '#1d4ed8']
-          ]
-        },
-        lineWidth: 3,
-        marker: {
-          radius: 4,
-          fillColor: '#3b82f6',
-          lineWidth: 2,
-          lineColor: '#ffffff'
-        },
-        dataLabels: {
-          enabled: false
-        }
-      }
-    ],
-    tooltip: {
-      backgroundColor: '#ffffff',
-      borderColor: '#e5e7eb',
-      borderRadius: 8,
-      shadow: {
-        color: 'rgba(0, 0, 0, 0.1)',
-        offsetX: 0,
-        offsetY: 4,
-        opacity: 0.1,
-        width: 3
-      },
-      style: {
-        color: '#374151',
-        fontSize: '14px'
-      },
-      formatter: function () {
-        return `
-          <div style="padding: 8px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${this.x}</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 12px; height: 12px; background: #3b82f6; border-radius: 2px;"></div>
-              <span>Revenue: <strong>PKR ${this.y?.toLocaleString()}</strong></span>
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className='bg-background rounded-lg border p-2 shadow-sm'>
+          <div className='grid grid-cols-2 gap-2'>
+            <div className='flex flex-col'>
+              <span className='text-muted-foreground text-[0.70rem] uppercase'>
+                Date
+              </span>
+              <span className='text-muted-foreground font-bold'>{label}</span>
+            </div>
+            <div className='flex flex-col'>
+              <span className='text-muted-foreground text-[0.70rem] uppercase'>
+                Revenue
+              </span>
+              <span className='font-bold'>
+                PKR {payload[0].value?.toLocaleString()}
+              </span>
             </div>
           </div>
-        `;
-      }
-    },
-    legend: {
-      enabled: false
-    },
-    credits: {
-      enabled: false
-    },
-    plotOptions: {
-      line: {
-        marker: {
-          enabled: true,
-          states: {
-            hover: {
-              enabled: true,
-              radius: 6
-            }
-          }
-        }
-      },
-      column: {
-        borderRadius: 4,
-        borderWidth: 0
-      }
+        </div>
+      );
     }
+    return null;
   };
 
   if (loading) {
@@ -249,13 +168,69 @@ export function RevenueChart() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className='h-[300px] w-full'>
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-        </div>
+        <ChartContainer config={chartConfig} className='h-[300px] w-full'>
+          <ResponsiveContainer width='100%' height='100%'>
+            {chartType === 'line' ? (
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray='3 3' className='stroke-muted' />
+                <XAxis
+                  dataKey='date'
+                  className='fill-muted-foreground text-xs'
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  className='fill-muted-foreground text-xs'
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `PKR ${value.toLocaleString()}`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Line
+                  type='monotone'
+                  dataKey='revenue'
+                  stroke='hsl(var(--chart-1))'
+                  strokeWidth={3}
+                  dot={{ fill: 'hsl(var(--chart-1))', strokeWidth: 2, r: 4 }}
+                  activeDot={{
+                    r: 6,
+                    stroke: 'hsl(var(--chart-1))',
+                    strokeWidth: 2
+                  }}
+                />
+              </LineChart>
+            ) : (
+              <BarChart data={data}>
+                <CartesianGrid strokeDasharray='3 3' className='stroke-muted' />
+                <XAxis
+                  dataKey='date'
+                  className='fill-muted-foreground text-xs'
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  className='fill-muted-foreground text-xs'
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `PKR ${value.toLocaleString()}`}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar
+                  dataKey='revenue'
+                  fill='hsl(var(--chart-1))'
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            )}
+          </ResponsiveContainer>
+        </ChartContainer>
         <div className='text-muted-foreground mt-4 flex items-center justify-between text-sm'>
           <div className='flex items-center space-x-4'>
             <div className='flex items-center space-x-2'>
-              <div className='h-2 w-2 rounded-full bg-blue-500' />
+              <div
+                className='h-2 w-2 rounded-full'
+                style={{ backgroundColor: 'hsl(var(--chart-1))' }}
+              />
               <span>Revenue Growth: +{growthRate}%</span>
             </div>
           </div>

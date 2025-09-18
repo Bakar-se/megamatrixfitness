@@ -19,7 +19,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const users: any = await prisma.user.findMany({
       where: {
         is_deleted: false,
-        role: 'MEMBER'
+        role: 'OWNER'
       },
       include: {
         subscription: true
