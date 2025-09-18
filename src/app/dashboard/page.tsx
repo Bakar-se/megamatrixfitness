@@ -5,8 +5,8 @@ import { redirect } from 'next/navigation';
 export default async function Dashboard() {
   const userRole = await getUserRole();
   if (userRole === 'SUPERADMIN') {
-    redirect('/dashboard/overview');
+    redirect('/dashboard/clients');
   } else if (userRole === 'OWNER') {
-    redirect('/dashboard/locations');
+    redirect('/dashboard/overview');
   }
 }

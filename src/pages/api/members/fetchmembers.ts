@@ -58,7 +58,8 @@ export default async function handler(
       where: {
         gym_id: gym_id,
         user: {
-          is_deleted: false
+          is_deleted: false,
+          role: 'MEMBER'
         }
       },
       include: {
