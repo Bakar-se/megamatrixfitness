@@ -4,8 +4,23 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { IconBuilding, IconUsers, IconTools } from '@tabler/icons-react';
 import axios from 'axios';
-import Highcharts from 'highcharts';
-import HighchartsReact from 'highcharts-react-official';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent
+} from '@/components/ui/chart';
 
 export function GymStatsChart() {
   const [data, setData] = useState<any>({ chartData: [], pieData: [] });
@@ -32,208 +47,24 @@ export function GymStatsChart() {
     fetchGymStats();
   }, []);
 
-  const overviewChartOptions: Highcharts.Options = {
-    chart: {
-      type: 'column',
-      backgroundColor: 'transparent',
-      style: {
-        fontFamily: 'Inter, system-ui, sans-serif'
-      }
+  const chartConfig = {
+    members: {
+      label: 'Members',
+      color: 'var(--chart-1)'
     },
-    title: {
-      text: undefined
-    },
-    xAxis: {
-      categories: data.chartData?.map((gym: any) => gym.name) || [],
-      gridLineColor: '#e5e7eb',
-      lineColor: '#e5e7eb',
-      tickColor: '#e5e7eb',
-      labels: {
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        },
-        rotation: -45
-      }
-    },
-    yAxis: {
-      title: {
-        text: 'Count',
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        }
-      },
-      gridLineColor: '#f3f4f6',
-      lineColor: '#e5e7eb',
-      labels: {
-        style: {
-          color: '#6b7280',
-          fontSize: '12px'
-        }
-      }
-    },
-    series: [
-      {
-        name: 'Members',
-        type: 'column',
-        data: data.chartData?.map((gym: any) => gym.members) || [],
-        color: {
-          linearGradient: {
-            x1: 0,
-            y1: 0,
-            x2: 0,
-            y2: 1
-          },
-          stops: [
-            [0, '#3b82f6'],
-            [1, '#1d4ed8']
-          ]
-        },
-        borderRadius: 4,
-        borderWidth: 0
-      },
-      {
-        name: 'Equipment',
-        type: 'column',
-        data: data.chartData?.map((gym: any) => gym.equipment) || [],
-        color: {
-          linearGradient: {
-            x1: 0,
-            y1: 0,
-            x2: 0,
-            y2: 1
-          },
-          stops: [
-            [0, '#10b981'],
-            [1, '#059669']
-          ]
-        },
-        borderRadius: 4,
-        borderWidth: 0
-      }
-    ],
-    tooltip: {
-      backgroundColor: '#ffffff',
-      borderColor: '#e5e7eb',
-      borderRadius: 8,
-      shadow: {
-        color: 'rgba(0, 0, 0, 0.1)',
-        offsetX: 0,
-        offsetY: 4,
-        opacity: 0.1,
-        width: 3
-      },
-      style: {
-        color: '#374151',
-        fontSize: '14px'
-      },
-      formatter: function () {
-        const point = this as any;
-        const series = this.series;
-        const color = series.color;
-
-        return `
-          <div style="padding: 8px;">
-            <div style="font-weight: 600; margin-bottom: 4px;">${point.x}</div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 12px; height: 12px; background: ${color}; border-radius: 2px;"></div>
-              <span>${series.name}: <strong>${point.y?.toLocaleString()}</strong></span>
-            </div>
-          </div>
-        `;
-      }
-    },
-    legend: {
-      enabled: true,
-      align: 'center',
-      verticalAlign: 'bottom',
-      itemStyle: {
-        color: '#6b7280',
-        fontSize: '12px'
-      },
-      itemHoverStyle: {
-        color: '#374151'
-      }
-    },
-    credits: {
-      enabled: false
-    },
-    plotOptions: {
-      column: {
-        dataLabels: {
-          enabled: false
-        }
-      }
+    equipment: {
+      label: 'Equipment',
+      color: 'var(--chart-2)'
     }
   };
 
-  const distributionChartOptions: Highcharts.Options = {
-    chart: {
-      type: 'pie',
-      backgroundColor: 'transparent',
-      style: {
-        fontFamily: 'Inter, system-ui, sans-serif'
-      }
-    },
-    title: {
-      text: undefined
-    },
-    series: [
-      {
-        name: 'Gym Status',
-        type: 'pie',
-        data: data.pieData || [],
-        innerSize: '40%',
-        dataLabels: {
-          enabled: true,
-          format: '{point.name}: {point.percentage:.1f}%',
-          style: {
-            color: '#374151',
-            fontSize: '12px',
-            fontWeight: '500'
-          }
-        }
-      }
-    ],
-    tooltip: {
-      backgroundColor: '#ffffff',
-      borderColor: '#e5e7eb',
-      borderRadius: 8,
-      shadow: {
-        color: 'rgba(0, 0, 0, 0.1)',
-        offsetX: 0,
-        offsetY: 4,
-        opacity: 0.1,
-        width: 3
-      },
-      style: {
-        color: '#374151',
-        fontSize: '14px'
-      },
-      formatter: function () {
-        const point = this as any;
-        return `
-          <div style="padding: 8px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="width: 12px; height: 12px; background: ${point.color}; border-radius: 50%;"></div>
-              <span><strong>${point.name}</strong>: ${point.y} gyms (${point.percentage?.toFixed(1) || 0}%)</span>
-            </div>
-          </div>
-        `;
-      }
-    },
-    credits: {
-      enabled: false
-    },
-    plotOptions: {
-      pie: {
-        allowPointSelect: true,
-        cursor: 'pointer',
-        showInLegend: false
-      }
-    }
-  };
+  const pieColors = [
+    'var(--chart-1)',
+    'var(--chart-2)',
+    'var(--chart-3)',
+    'var(--chart-4)',
+    'var(--chart-5)'
+  ];
 
   if (loading) {
     return (
@@ -293,8 +124,8 @@ export function GymStatsChart() {
             onClick={() => setActiveTab('overview')}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'overview'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             }`}
           >
             Overview
@@ -303,8 +134,8 @@ export function GymStatsChart() {
             onClick={() => setActiveTab('distribution')}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               activeTab === 'distribution'
-                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
             }`}
           >
             Status Distribution
@@ -312,35 +143,122 @@ export function GymStatsChart() {
         </div>
 
         <div className='h-[300px] w-full'>
-          <HighchartsReact
-            highcharts={Highcharts}
-            options={
-              activeTab === 'overview'
-                ? overviewChartOptions
-                : distributionChartOptions
-            }
-          />
+          {activeTab === 'overview' ? (
+            <ChartContainer config={chartConfig}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart
+                  data={data.chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+                >
+                  <CartesianGrid strokeDasharray='3 3' stroke='primary' />
+                  <XAxis
+                    dataKey='name'
+                    stroke='bg-chart-1'
+                    fontSize={12}
+                    angle={-45}
+                    textAnchor='end'
+                    height={60}
+                  />
+                  <YAxis stroke='primary' fontSize={12} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Bar
+                    dataKey='members'
+                    fill='var(--color-members)'
+                    name='Members'
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey='equipment'
+                    fill='var(--color-equipment)'
+                    name='Equipment'
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          ) : (
+            <ChartContainer config={chartConfig}>
+              <ResponsiveContainer width='100%' height='100%'>
+                <PieChart>
+                  <Pie
+                    data={data.pieData}
+                    cx='50%'
+                    cy='50%'
+                    innerRadius={60}
+                    outerRadius={120}
+                    paddingAngle={5}
+                    dataKey='value'
+                    nameKey='name'
+                    label={({ name, percent }) =>
+                      `${name}: ${(percent * 100).toFixed(1)}%`
+                    }
+                    labelLine={false}
+                  >
+                    {data.pieData?.map((entry: any, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={pieColors[index % pieColors.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0];
+                        return (
+                          <div className='bg-background rounded-lg border p-2 shadow-sm'>
+                            <div className='flex items-center gap-2'>
+                              <div
+                                className='h-3 w-3 rounded-full'
+                                style={{ backgroundColor: data.color }}
+                              />
+                              <span className='font-medium'>{data.name}</span>
+                            </div>
+                            <p className='text-muted-foreground text-sm'>
+                              {data.value} gyms (
+                              {data.payload?.total
+                                ? (
+                                    (Number(data.value) /
+                                      Number(data.payload.total)) *
+                                    100
+                                  ).toFixed(1)
+                                : '0.0'}
+                              %)
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          )}
         </div>
 
         <div className='mt-4 grid grid-cols-3 gap-4 text-sm'>
           <div className='flex items-center space-x-2'>
-            <div className='h-2 w-2 rounded-full bg-blue-500' />
+            <div className='bg-chart-1 h-2 w-2 rounded-full' />
             <span className='text-muted-foreground'>Total Members: </span>
-            <span className='font-semibold'>
+            <span className='text-foreground font-semibold'>
               {totalMembers.toLocaleString()}
             </span>
           </div>
           <div className='flex items-center space-x-2'>
-            <div className='h-2 w-2 rounded-full bg-green-500' />
+            <div className='bg-chart-2 h-2 w-2 rounded-full' />
             <span className='text-muted-foreground'>Total Equipment: </span>
-            <span className='font-semibold'>
+            <span className='text-foreground font-semibold'>
               {totalEquipment.toLocaleString()}
             </span>
           </div>
           <div className='flex items-center space-x-2'>
-            <div className='h-2 w-2 rounded-full bg-emerald-500' />
+            <div className='bg-chart-3 h-2 w-2 rounded-full' />
             <span className='text-muted-foreground'>Active Gyms: </span>
-            <span className='font-semibold'>{activeGyms.toLocaleString()}</span>
+            <span className='text-foreground font-semibold'>
+              {activeGyms.toLocaleString()}
+            </span>
           </div>
         </div>
       </CardContent>
