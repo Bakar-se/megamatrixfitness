@@ -230,9 +230,9 @@ const ClientListing: React.FC<StagesTabProps> = ({ session }) => {
 
     fetchData();
   }, [dispatch]);
-
+  console.log(data.clients);
   return (
-    <PageContainer>
+    <PageContainer scrollable={false}>
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <h3 className='text-lg font-semibold'>Clients</h3>
